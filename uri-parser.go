@@ -741,3 +741,83 @@ func FindFragment(data []byte) (found bool, end int) {
 	)
 	return findFragment(data)
 }
+
+// RFC3986 - 4.1. URI Reference
+// URI-reference is used to denote the most common usage of a resource identifier.
+//
+//  URI-reference = URI / relative-ref
+//
+
+func FindUriReference(data []byte) (found bool, end int) {
+	findUriReference := abnfp.CreateFindAlternatives([]abnfp.FindFunc{
+		FindUri,
+		FindRelativeRef,
+	})
+	return findUriReference(data)
+}
+
+// RFC3986 - 4.2. Relative Reference
+//
+//  relative-ref  = relative-part [ "?" query ] [ "#" fragment ]
+//
+
+func FindRelativeRef(data []byte) (found bool, end int) {
+	findRelativeRef := abnfp.CreateFindConcatenation([]abnfp.FindFunc{
+		FindRelativePart,
+		abnfp.CreateFindOptionalSequence(
+			abnfp.CreateFindConcatenation([]abnfp.FindFunc{
+				abnfp.CreateFind([]byte("?")),
+				FindQuery,
+			}),
+		),
+		abnfp.CreateFindOptionalSequence(
+			abnfp.CreateFindConcatenation([]abnfp.FindFunc{
+				abnfp.CreateFind([]byte("#")),
+				FindFragment,
+			}),
+		),
+	})
+	return findRelativeRef(data)
+}
+
+// RFC3986 - 4.2. Relative Reference
+//
+//  relative-part = "//" authority path-abempty
+//                / path-absolute
+//                / path-noscheme
+//                / path-empty
+//
+
+func FindRelativePart(data []byte) (found bool, end int) {
+	// NOTE
+	// I think relative-part is the same with hier-part.
+	//
+	// RFC3986 - 3. Syntax Components
+	//
+	//  hier-part = "//" authority path-abempty
+	//            / path-absolute
+	//            / path-rootless
+	//            / path-empty
+	//
+	return FindHierPart(data)
+}
+
+// RFC3986 - 4.3. Absolute URI
+//
+//  absolute-URI  = scheme ":" hier-part [ "?" query ]
+//
+
+func FindAbsoluteUri(data []byte) (found bool, end int) {
+	findAbsoluteUri := abnfp.CreateFindConcatenation([]abnfp.FindFunc{
+		FindScheme,
+		abnfp.CreateFind([]byte(":")),
+		FindHierPart,
+		abnfp.CreateFindOptionalSequence(
+			abnfp.CreateFindConcatenation([]abnfp.FindFunc{
+				abnfp.CreateFind([]byte("?")),
+				FindQuery,
+			}),
+		),
+	})
+	return findAbsoluteUri(data)
+}

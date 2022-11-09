@@ -1760,3 +1760,166 @@ func TestFindFragment(t *testing.T) {
 
 	execTest(tests, t, FindFragment)
 }
+
+func TestFindUriReference(t *testing.T) {
+	tests := []TestCase{
+		{
+			testName:      "data: []byte{}",
+			data:          []byte{},
+			expectedFound: true,
+			expectedEnd:   0,
+		},
+		{
+			testName:      "data: []byte(\"a\")",
+			data:          []byte("a"),
+			expectedFound: true,
+			expectedEnd:   1,
+		},
+		// URI
+		{
+			testName:      "data: []byte(\"http://example.com/index.html?key1=value1#key2=value2\")",
+			data:          []byte("http://example.com/index.html?key1=value1#key2=value2"),
+			expectedFound: true,
+			expectedEnd:   53,
+		},
+
+		// relative-ref
+		{
+			testName:      "data: []byte(\"//example.com/index.html?key1=value1#key2=value2\")",
+			data:          []byte("//example.com/index.html?key1=value1#key2=value2"),
+			expectedFound: true,
+			expectedEnd:   48,
+		},
+	}
+
+	execTest(tests, t, FindUriReference)
+}
+
+func TestFindRelativeRef(t *testing.T) {
+	tests := []TestCase{
+		{
+			testName:      "data: []byte{}",
+			data:          []byte{},
+			expectedFound: true,
+			expectedEnd:   0,
+		},
+		{
+			testName:      "data: []byte(\"a\")",
+			data:          []byte("a"),
+			expectedFound: true,
+			expectedEnd:   1,
+		},
+		{
+			testName:      "data: []byte(\"//example.com/index.html\")",
+			data:          []byte("//example.com/index.html"),
+			expectedFound: true,
+			expectedEnd:   24,
+		},
+		{
+			testName:      "data: []byte(\"//example.com/index.html?key=value\")",
+			data:          []byte("//example.com/index.html?key=value"),
+			expectedFound: true,
+			expectedEnd:   34,
+		},
+		{
+			testName:      "data: []byte(\"//example.com/index.html#key=value\")",
+			data:          []byte("//example.com/index.html#key=value"),
+			expectedFound: true,
+			expectedEnd:   34,
+		},
+		{
+			testName:      "data: []byte(\"//example.com/index.html?key1=value1#key2=value2\")",
+			data:          []byte("//example.com/index.html?key1=value1#key2=value2"),
+			expectedFound: true,
+			expectedEnd:   48,
+		},
+	}
+
+	execTest(tests, t, FindRelativeRef)
+}
+
+func TestFindRelativePart(t *testing.T) {
+	tests := []TestCase{
+		{
+			testName:      "data: []byte{}",
+			data:          []byte{},
+			expectedFound: true,
+			expectedEnd:   0,
+		},
+		{
+			testName:      "data: []byte(\"a\")",
+			data:          []byte("a"),
+			expectedFound: true,
+			expectedEnd:   1,
+		},
+		{
+			testName:      "data: []byte(\"//example.com\")",
+			data:          []byte("//example.com"),
+			expectedFound: true,
+			expectedEnd:   13,
+		},
+		{
+			testName:      "data: []byte(\"//example.com/\")",
+			data:          []byte("//example.com/"),
+			expectedFound: true,
+			expectedEnd:   14,
+		},
+		{
+			testName:      "data: []byte(\"//example.com/index.html\")",
+			data:          []byte("//example.com/index.html"),
+			expectedFound: true,
+			expectedEnd:   24,
+		},
+		{
+			testName:      "data: []byte(\"/\")",
+			data:          []byte("/"),
+			expectedFound: true,
+			expectedEnd:   1,
+		},
+		{
+			testName:      "data: []byte(\"/index.html\")",
+			data:          []byte("/index.html"),
+			expectedFound: true,
+			expectedEnd:   11,
+		},
+		{
+			testName:      "data: []byte(\"index.html\")",
+			data:          []byte("index.html"),
+			expectedFound: true,
+			expectedEnd:   10,
+		},
+		{
+			testName:      "data: []byte(\"path/index.html\")",
+			data:          []byte("path/index.html"),
+			expectedFound: true,
+			expectedEnd:   15,
+		},
+	}
+
+	execTest(tests, t, FindRelativePart)
+}
+
+func TestFindAbsoluteUri(t *testing.T) {
+	tests := []TestCase{
+		{
+			testName:      "data: []byte{}",
+			data:          []byte{},
+			expectedFound: false,
+			expectedEnd:   0,
+		},
+		{
+			testName:      "data: []byte(\"a\")",
+			data:          []byte("a"),
+			expectedFound: false,
+			expectedEnd:   0,
+		},
+		{
+			testName:      "data: []byte(\"http://example.com/path1/path2?key=value\")",
+			data:          []byte("http://example.com/path1/path2?key=value"),
+			expectedFound: true,
+			expectedEnd:   40,
+		},
+	}
+
+	execTest(tests, t, FindAbsoluteUri)
+}
