@@ -9,16 +9,13 @@ import (
 //  pct-encoded   = "%" HEXDIG HEXDIG
 //
 
-func FindPctEncoded(data []byte) (found bool, end int) {
-	findPctEncoded := abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-		// "%"
-		abnfp.CreateFind([]byte{'%'}),
-		// HEXDIG
+func FindPctEncoded(data []byte) []int {
+	findPctEncoded := abnfp.NewFindConcatenation([]abnfp.FindFunc{
+		abnfp.NewFindByte('%'),
 		abnfp.FindHexDig,
-		// HEXDIG
 		abnfp.FindHexDig,
 	})
-	return findPctEncoded(data[end:])
+	return findPctEncoded(data)
 }
 
 // RFC3986 - 2.2. Reserved Characters
@@ -26,8 +23,8 @@ func FindPctEncoded(data []byte) (found bool, end int) {
 //  reserved    = gen-delims / sub-delims
 //
 
-func FindReserved(data []byte) (found bool, end int) {
-	findReserved := abnfp.CreateFindAlternatives([]abnfp.FindFunc{
+func FindReserved(data []byte) []int {
+	findReserved := abnfp.NewFindAlternatives([]abnfp.FindFunc{
 		FindGenDelims,
 		FindSubDelims,
 	})
@@ -39,15 +36,15 @@ func FindReserved(data []byte) (found bool, end int) {
 //  gen-delims  = ":" / "/" / "?" / "#" / "[" / "]" / "@"
 //
 
-func FindGenDelims(data []byte) (found bool, end int) {
-	findGenDelims := abnfp.CreateFindAlternatives([]abnfp.FindFunc{
-		abnfp.CreateFind([]byte{':'}),
-		abnfp.CreateFind([]byte{'/'}),
-		abnfp.CreateFind([]byte{'?'}),
-		abnfp.CreateFind([]byte{'#'}),
-		abnfp.CreateFind([]byte{'['}),
-		abnfp.CreateFind([]byte{']'}),
-		abnfp.CreateFind([]byte{'@'}),
+func FindGenDelims(data []byte) []int {
+	findGenDelims := abnfp.NewFindAlternatives([]abnfp.FindFunc{
+		abnfp.NewFindByte(':'),
+		abnfp.NewFindByte('/'),
+		abnfp.NewFindByte('?'),
+		abnfp.NewFindByte('#'),
+		abnfp.NewFindByte('['),
+		abnfp.NewFindByte(']'),
+		abnfp.NewFindByte('@'),
 	})
 	return findGenDelims(data)
 }
@@ -58,19 +55,19 @@ func FindGenDelims(data []byte) (found bool, end int) {
 //              / "*" / "+" / "," / ";" / "="
 //
 
-func FindSubDelims(data []byte) (found bool, end int) {
-	findSubDelims := abnfp.CreateFindAlternatives([]abnfp.FindFunc{
-		abnfp.CreateFind([]byte{'!'}),
-		abnfp.CreateFind([]byte{'$'}),
-		abnfp.CreateFind([]byte{'&'}),
-		abnfp.CreateFind([]byte{'\''}),
-		abnfp.CreateFind([]byte{'('}),
-		abnfp.CreateFind([]byte{')'}),
-		abnfp.CreateFind([]byte{'*'}),
-		abnfp.CreateFind([]byte{'+'}),
-		abnfp.CreateFind([]byte{','}),
-		abnfp.CreateFind([]byte{';'}),
-		abnfp.CreateFind([]byte{'='}),
+func FindSubDelims(data []byte) []int {
+	findSubDelims := abnfp.NewFindAlternatives([]abnfp.FindFunc{
+		abnfp.NewFindByte('!'),
+		abnfp.NewFindByte('$'),
+		abnfp.NewFindByte('&'),
+		abnfp.NewFindByte('\''),
+		abnfp.NewFindByte('('),
+		abnfp.NewFindByte(')'),
+		abnfp.NewFindByte('*'),
+		abnfp.NewFindByte('+'),
+		abnfp.NewFindByte(','),
+		abnfp.NewFindByte(';'),
+		abnfp.NewFindByte('='),
 	})
 	return findSubDelims(data)
 }
@@ -80,14 +77,14 @@ func FindSubDelims(data []byte) (found bool, end int) {
 //  unreserved  = ALPHA / DIGIT / "-" / "." / "_" / "~"
 //
 
-func FindUnreserved(data []byte) (found bool, end int) {
-	findUnreserved := abnfp.CreateFindAlternatives([]abnfp.FindFunc{
+func FindUnreserved(data []byte) []int {
+	findUnreserved := abnfp.NewFindAlternatives([]abnfp.FindFunc{
 		abnfp.FindAlpha,
 		abnfp.FindDigit,
-		abnfp.CreateFind([]byte{'-'}),
-		abnfp.CreateFind([]byte{'.'}),
-		abnfp.CreateFind([]byte{'_'}),
-		abnfp.CreateFind([]byte{'~'}),
+		abnfp.NewFindByte('-'),
+		abnfp.NewFindByte('.'),
+		abnfp.NewFindByte('_'),
+		abnfp.NewFindByte('~'),
 	})
 	return findUnreserved(data)
 }
@@ -97,20 +94,20 @@ func FindUnreserved(data []byte) (found bool, end int) {
 //  URI = scheme ":" hier-part [ "?" query ] [ "#" fragment ]
 //
 
-func FindUri(data []byte) (found bool, end int) {
-	findUrl := abnfp.CreateFindConcatenation([]abnfp.FindFunc{
+func FindUri(data []byte) []int {
+	findUrl := abnfp.NewFindConcatenation([]abnfp.FindFunc{
 		FindScheme,
-		abnfp.CreateFind([]byte{':'}),
+		abnfp.NewFindByte(':'),
 		FindHierPart,
-		abnfp.CreateFindOptionalSequence(
-			abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-				abnfp.CreateFind([]byte{'?'}),
+		abnfp.NewFindOptionalSequence(
+			abnfp.NewFindConcatenation([]abnfp.FindFunc{
+				abnfp.NewFindByte('?'),
 				FindQuery,
 			}),
 		),
-		abnfp.CreateFindOptionalSequence(
-			abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-				abnfp.CreateFind([]byte{'#'}),
+		abnfp.NewFindOptionalSequence(
+			abnfp.NewFindConcatenation([]abnfp.FindFunc{
+				abnfp.NewFindByte('#'),
 				FindQuery,
 			}),
 		),
@@ -126,10 +123,10 @@ func FindUri(data []byte) (found bool, end int) {
 //            / path-empty
 //
 
-func FindHierPart(data []byte) (found bool, end int) {
-	findHierPart := abnfp.CreateFindAlternatives([]abnfp.FindFunc{
-		abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-			abnfp.CreateFind([]byte("//")),
+func FindHierPart(data []byte) []int {
+	findHierPart := abnfp.NewFindAlternatives([]abnfp.FindFunc{
+		abnfp.NewFindConcatenation([]abnfp.FindFunc{
+			abnfp.NewFindBytes([]byte("//")),
 			FindAuthority,
 			FindPathAbempty,
 		}),
@@ -145,16 +142,16 @@ func FindHierPart(data []byte) (found bool, end int) {
 //  scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
 //
 
-func FindScheme(data []byte) (found bool, end int) {
-	findScheme := abnfp.CreateFindConcatenation([]abnfp.FindFunc{
+func FindScheme(data []byte) []int {
+	findScheme := abnfp.NewFindConcatenation([]abnfp.FindFunc{
 		abnfp.FindAlpha,
-		abnfp.CreateFindVariableRepetition(
-			abnfp.CreateFindAlternatives([]abnfp.FindFunc{
+		abnfp.NewFindVariableRepetition(
+			abnfp.NewFindAlternatives([]abnfp.FindFunc{
 				abnfp.FindAlpha,
 				abnfp.FindDigit,
-				abnfp.CreateFind([]byte{'+'}),
-				abnfp.CreateFind([]byte{'-'}),
-				abnfp.CreateFind([]byte{'.'}),
+				abnfp.NewFindByte('+'),
+				abnfp.NewFindByte('-'),
+				abnfp.NewFindByte('.'),
 			})),
 	})
 	return findScheme(data)
@@ -165,18 +162,18 @@ func FindScheme(data []byte) (found bool, end int) {
 //  authority = [ userinfo "@" ] host [ ":" port ]
 //
 
-func FindAuthority(data []byte) (found bool, end int) {
-	findAuthority := abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-		abnfp.CreateFindOptionalSequence(
-			abnfp.CreateFindConcatenation([]abnfp.FindFunc{
+func FindAuthority(data []byte) []int {
+	findAuthority := abnfp.NewFindConcatenation([]abnfp.FindFunc{
+		abnfp.NewFindOptionalSequence(
+			abnfp.NewFindConcatenation([]abnfp.FindFunc{
 				FindUserInfo,
-				abnfp.CreateFind([]byte{'@'}),
+				abnfp.NewFindByte('@'),
 			}),
 		),
 		FindHost,
-		abnfp.CreateFindOptionalSequence(
-			abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-				abnfp.CreateFind([]byte{':'}),
+		abnfp.NewFindOptionalSequence(
+			abnfp.NewFindConcatenation([]abnfp.FindFunc{
+				abnfp.NewFindByte(':'),
 				FindPort,
 			}),
 		),
@@ -189,13 +186,13 @@ func FindAuthority(data []byte) (found bool, end int) {
 //  userinfo = *( unreserved / pct-encoded / sub-delims / ":" )
 //
 
-func FindUserInfo(data []byte) (found bool, end int) {
-	findUserInfo := abnfp.CreateFindVariableRepetition(
-		abnfp.CreateFindAlternatives([]abnfp.FindFunc{
+func FindUserInfo(data []byte) []int {
+	findUserInfo := abnfp.NewFindVariableRepetition(
+		abnfp.NewFindAlternatives([]abnfp.FindFunc{
 			FindUnreserved,
 			FindPctEncoded,
 			FindSubDelims,
-			abnfp.CreateFind([]byte{':'}),
+			abnfp.NewFindByte(':'),
 		}),
 	)
 	return findUserInfo(data)
@@ -206,8 +203,8 @@ func FindUserInfo(data []byte) (found bool, end int) {
 //  host = IP-literal / IPv4address / reg-name
 //
 
-func FindHost(data []byte) (found bool, end int) {
-	findHost := abnfp.CreateFindAlternatives([]abnfp.FindFunc{
+func FindHost(data []byte) []int {
+	findHost := abnfp.NewFindAlternatives([]abnfp.FindFunc{
 		FindIpLiteral,
 		FindIpV4Address,
 		FindRegName,
@@ -220,14 +217,14 @@ func FindHost(data []byte) (found bool, end int) {
 //  IP-literal = "[" ( IPv6address / IPvFuture  ) "]"
 //
 
-func FindIpLiteral(data []byte) (found bool, end int) {
-	findIpLiteral := abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-		abnfp.CreateFind([]byte{'['}),
-		abnfp.CreateFindAlternatives([]abnfp.FindFunc{
+func FindIpLiteral(data []byte) []int {
+	findIpLiteral := abnfp.NewFindConcatenation([]abnfp.FindFunc{
+		abnfp.NewFindByte('['),
+		abnfp.NewFindAlternatives([]abnfp.FindFunc{
 			FindIpV6Address,
 			FindIpVFuture,
 		}),
-		abnfp.CreateFind([]byte{']'}),
+		abnfp.NewFindByte(']'),
 	})
 	return findIpLiteral(data)
 }
@@ -237,16 +234,16 @@ func FindIpLiteral(data []byte) (found bool, end int) {
 //  IPvFuture = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" )
 //
 
-func FindIpVFuture(data []byte) (found bool, end int) {
-	findIpVFuture := abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-		abnfp.CreateFind([]byte{'v'}),
-		abnfp.CreateFindVariableRepetitionMin(1, abnfp.FindHexDig),
-		abnfp.CreateFind([]byte{'.'}),
-		abnfp.CreateFindVariableRepetitionMin(1, abnfp.CreateFindAlternatives(
+func FindIpVFuture(data []byte) []int {
+	findIpVFuture := abnfp.NewFindConcatenation([]abnfp.FindFunc{
+		abnfp.NewFindByte('v'),
+		abnfp.NewFindVariableRepetitionMin(1, abnfp.FindHexDig),
+		abnfp.NewFindByte('.'),
+		abnfp.NewFindVariableRepetitionMin(1, abnfp.NewFindAlternatives(
 			[]abnfp.FindFunc{
 				FindUnreserved,
 				FindSubDelims,
-				abnfp.CreateFind([]byte{':'}),
+				abnfp.NewFindByte(':'),
 			},
 		)),
 	})
@@ -266,182 +263,149 @@ func FindIpVFuture(data []byte) (found bool, end int) {
 //              / [ *6( h16 ":" ) h16 ] "::"
 //
 
-func FindIpV6Address(data []byte) (found bool, end int) {
-	findIpV6Address := abnfp.CreateFindAlternatives([]abnfp.FindFunc{
+func FindIpV6Address(data []byte) []int {
+	findIpV6Address := abnfp.NewFindAlternatives([]abnfp.FindFunc{
 		//                            6( h16 ":" ) ls32
-		abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-			abnfp.CreateFindSpecificRepetition(6, abnfp.CreateFindConcatenation(
+		abnfp.NewFindConcatenation([]abnfp.FindFunc{
+			abnfp.NewFindSpecificRepetition(6, abnfp.NewFindConcatenation(
 				[]abnfp.FindFunc{
 					FindH16,
-					abnfp.CreateFind([]byte{':'}),
+					abnfp.NewFindByte(':'),
 				},
 			)),
 			FindLs32,
 		}),
 		//                       "::" 5( h16 ":" ) ls32
-		abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-			abnfp.CreateFind([]byte{':', ':'}),
-			abnfp.CreateFindSpecificRepetition(5, abnfp.CreateFindConcatenation(
+		abnfp.NewFindConcatenation([]abnfp.FindFunc{
+			abnfp.NewFindBytes([]byte("::")),
+			abnfp.NewFindSpecificRepetition(5, abnfp.NewFindConcatenation(
 				[]abnfp.FindFunc{
 					FindH16,
-					abnfp.CreateFind([]byte{':'}),
+					abnfp.NewFindByte(':'),
 				},
 			)),
 			FindLs32,
 		}),
 		// [               h16 ] "::" 4( h16 ":" ) ls32
-		abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-			abnfp.CreateFindOptionalSequence(FindH16),
-			abnfp.CreateFind([]byte{':', ':'}),
-			abnfp.CreateFindSpecificRepetition(4, abnfp.CreateFindConcatenation(
+		abnfp.NewFindConcatenation([]abnfp.FindFunc{
+			abnfp.NewFindOptionalSequence(FindH16),
+			abnfp.NewFindBytes([]byte("::")),
+			abnfp.NewFindSpecificRepetition(4, abnfp.NewFindConcatenation(
 				[]abnfp.FindFunc{
 					FindH16,
-					abnfp.CreateFind([]byte{':'}),
+					abnfp.NewFindByte(':'),
 				},
 			)),
 			FindLs32,
 		}),
 		// [ *1( h16 ":" ) h16 ] "::" 3( h16 ":" ) ls32
-		//
-		// FIXME
-		// When parse []byte("FFFF::FFFF:FFFF:FFFF:FFFF:FFFF"),
-		// the 'FFFF::' is h16 ":" ":". This is parsed as ( h16 ":" ) and ":".
-		// This makes the parsing fail.
-		// To avoid this issue, I should fix abnf-parser.
-		// But as a hot fix, I modify the rule as follows.
-		//
-		//  [ h16 *1( ":" h16 ) ] "::" 3( h16 ":" ) ls32
-		//
-		abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-			abnfp.CreateFindOptionalSequence(
-				abnfp.CreateFindConcatenation([]abnfp.FindFunc{
+		abnfp.NewFindConcatenation([]abnfp.FindFunc{
+			abnfp.NewFindOptionalSequence(
+				abnfp.NewFindConcatenation([]abnfp.FindFunc{
+					abnfp.NewFindVariableRepetitionMax(1,
+						abnfp.NewFindConcatenation([]abnfp.FindFunc{
+							FindH16,
+							abnfp.NewFindByte(':'),
+						}),
+					),
 					FindH16,
-					abnfp.CreateFindVariableRepetitionMax(1, abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-						abnfp.CreateFind([]byte{':'}),
-						FindH16,
-					})),
 				}),
 			),
-			abnfp.CreateFind([]byte{':', ':'}),
-			abnfp.CreateFindSpecificRepetition(3, abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-				FindH16,
-				abnfp.CreateFind([]byte{':'}),
-			})),
+			abnfp.NewFindBytes([]byte("::")),
+			abnfp.NewFindSpecificRepetition(3,
+				abnfp.NewFindConcatenation([]abnfp.FindFunc{
+					FindH16,
+					abnfp.NewFindByte(':'),
+				}),
+			),
 			FindLs32,
 		}),
 		// [ *2( h16 ":" ) h16 ] "::" 2( h16 ":" ) ls32
-		// FIXME
-		// When parse []byte("FFFF:FFFF::FFFF:FFFF:FFFF:FFFF"),
-		// the 'FFFF::' is h16 ":" ":". This is parsed as ( h16 ":" ) and ":".
-		// This makes the parsing fail.
-		// To avoid this issue, I should fix abnf-parser.
-		// But as a hot fix, I modify the rule as follows.
-		//
-		//  [ h16 *2( ":" h16 ) ] "::" 2( h16 ":" ) ls32
-		//
-		abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-			abnfp.CreateFindOptionalSequence(
-				abnfp.CreateFindConcatenation([]abnfp.FindFunc{
+		abnfp.NewFindConcatenation([]abnfp.FindFunc{
+			abnfp.NewFindOptionalSequence(
+				abnfp.NewFindConcatenation([]abnfp.FindFunc{
+					abnfp.NewFindVariableRepetitionMax(2,
+						abnfp.NewFindConcatenation([]abnfp.FindFunc{
+							FindH16,
+							abnfp.NewFindByte(':'),
+						}),
+					),
 					FindH16,
-					abnfp.CreateFindVariableRepetitionMax(2, abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-						abnfp.CreateFind([]byte{':'}),
-						FindH16,
-					})),
 				}),
 			),
-			abnfp.CreateFind([]byte{':', ':'}),
-			abnfp.CreateFindSpecificRepetition(2, abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-				FindH16,
-				abnfp.CreateFind([]byte{':'}),
-			})),
+			abnfp.NewFindBytes([]byte("::")),
+			abnfp.NewFindSpecificRepetition(2,
+				abnfp.NewFindConcatenation([]abnfp.FindFunc{
+					FindH16,
+					abnfp.NewFindByte(':'),
+				}),
+			),
 			FindLs32,
 		}),
 		// [ *3( h16 ":" ) h16 ] "::"    h16 ":"   ls32
-		// FIXME
-		// When parse []byte("FFFF:FFFF:FFFF::FFFF:FFFF:FFFF"),
-		// the 'FFFF::' is h16 ":" ":". This is parsed as ( h16 ":" ) and ":".
-		// This makes the parsing fail.
-		// To avoid this issue, I should fix abnf-parser.
-		// But as a hot fix, I modify the rule as follows.
-		//
-		//  [ h16 *3( ":" h16 ) ] "::"    h16 ":"   ls32
-		//
-		abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-			abnfp.CreateFindOptionalSequence(
-				abnfp.CreateFindConcatenation([]abnfp.FindFunc{
+		abnfp.NewFindConcatenation([]abnfp.FindFunc{
+			abnfp.NewFindOptionalSequence(
+				abnfp.NewFindConcatenation([]abnfp.FindFunc{
+					abnfp.NewFindVariableRepetitionMax(3,
+						abnfp.NewFindConcatenation([]abnfp.FindFunc{
+							FindH16,
+							abnfp.NewFindByte(':'),
+						}),
+					),
 					FindH16,
-					abnfp.CreateFindVariableRepetitionMax(3, abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-						abnfp.CreateFind([]byte{':'}),
-						FindH16,
-					})),
 				}),
 			),
-			abnfp.CreateFind([]byte{':', ':'}),
+			abnfp.NewFindBytes([]byte("::")),
 			FindH16,
-			abnfp.CreateFind([]byte{':'}),
+			abnfp.NewFindByte(':'),
 			FindLs32,
 		}),
 		// [ *4( h16 ":" ) h16 ] "::"              ls32
-		// FIXME
-		// When parse []byte("FFFF:FFFF:FFFF:FFFF::FFFF:FFFF"),
-		// the 'FFFF::' is h16 ":" ":". This is parsed as ( h16 ":" ) and ":".
-		// This makes the parsing fail.
-		// To avoid this issue, I should fix abnf-parser.
-		// But as a hot fix, I modify the rule as follows.
-		//
-		//  [ h16 *4( ":" h16 ) ] "::"              ls32
-		//
-		abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-			abnfp.CreateFindOptionalSequence(abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-				FindH16,
-				abnfp.CreateFindVariableRepetitionMax(4, abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-					abnfp.CreateFind([]byte{':'}),
+		abnfp.NewFindConcatenation([]abnfp.FindFunc{
+			abnfp.NewFindOptionalSequence(
+				abnfp.NewFindConcatenation([]abnfp.FindFunc{
+					abnfp.NewFindVariableRepetitionMax(4,
+						abnfp.NewFindConcatenation([]abnfp.FindFunc{
+							FindH16,
+							abnfp.NewFindByte(':'),
+						}),
+					),
 					FindH16,
-				})),
-			})),
-			abnfp.CreateFind([]byte{':', ':'}),
+				}),
+			),
+			abnfp.NewFindBytes([]byte("::")),
 			FindLs32,
 		}),
 		// [ *5( h16 ":" ) h16 ] "::"              h16
-		// FIXME
-		// When parse []byte("FFFF:FFFF:FFFF:FFFF:FFFF::FFFF"),
-		// the 'FFFF::' is h16 ":" ":". This is parsed as ( h16 ":" ) and ":".
-		// This makes the parsing fail.
-		// To avoid this issue, I should fix abnf-parser.
-		// But as a hot fix, I modify the rule as follows.
-		//
-		//  [ h16 *5( ":" h16 ) ] "::"             h16
-		//
-		abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-			abnfp.CreateFindOptionalSequence(abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-				FindH16,
-				abnfp.CreateFindVariableRepetitionMax(5, abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-					abnfp.CreateFind([]byte{':'}),
+		abnfp.NewFindConcatenation([]abnfp.FindFunc{
+			abnfp.NewFindOptionalSequence(
+				abnfp.NewFindConcatenation([]abnfp.FindFunc{
+					abnfp.NewFindVariableRepetitionMax(5,
+						abnfp.NewFindConcatenation([]abnfp.FindFunc{
+							FindH16,
+							abnfp.NewFindByte(':'),
+						}),
+					),
 					FindH16,
-				})),
-			})),
-			abnfp.CreateFind([]byte{':', ':'}),
+				}),
+			),
+			abnfp.NewFindBytes([]byte("::")),
 			FindH16,
 		}),
 		// [ *6( h16 ":" ) h16 ] "::"
-		// FIXME
-		// When parse []byte("FFFF:FFFF:FFFF:FFFF:FFFF:FFFF::"),
-		// the 'FFFF::' is h16 ":" ":". This is parsed as ( h16 ":" ) and ":".
-		// This makes the parsing fail.
-		// To avoid this issue, I should fix abnf-parser.
-		// But as a hot fix, I modify the rule as follows.
-		//
-		//  [ h16 *6( ":" h16 ) ] "::"
-		//
-		abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-			abnfp.CreateFindOptionalSequence(abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-				FindH16,
-				abnfp.CreateFindVariableRepetitionMax(6, abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-					abnfp.CreateFind([]byte{':'}),
+		abnfp.NewFindConcatenation([]abnfp.FindFunc{
+			abnfp.NewFindOptionalSequence(
+				abnfp.NewFindConcatenation([]abnfp.FindFunc{
+					abnfp.NewFindVariableRepetitionMax(6,
+						abnfp.NewFindConcatenation([]abnfp.FindFunc{
+							FindH16,
+							abnfp.NewFindByte(':'),
+						}),
+					),
 					FindH16,
-				})),
-			})),
-			abnfp.CreateFind([]byte{':', ':'}),
+				}),
+			),
+			abnfp.NewFindBytes([]byte("::")),
 		}),
 	})
 	return findIpV6Address(data)
@@ -453,11 +417,11 @@ func FindIpV6Address(data []byte) (found bool, end int) {
 //  ; least-significant 32 bits of address
 //
 
-func FindLs32(data []byte) (found bool, end int) {
-	findH32 := abnfp.CreateFindAlternatives([]abnfp.FindFunc{
-		abnfp.CreateFindConcatenation([]abnfp.FindFunc{
+func FindLs32(data []byte) []int {
+	findH32 := abnfp.NewFindAlternatives([]abnfp.FindFunc{
+		abnfp.NewFindConcatenation([]abnfp.FindFunc{
 			FindH16,
-			abnfp.CreateFind([]byte{':'}),
+			abnfp.NewFindByte(':'),
 			FindH16,
 		}),
 		FindIpV4Address,
@@ -471,8 +435,8 @@ func FindLs32(data []byte) (found bool, end int) {
 //  ; 16 bits of address represented in hexadecimal
 //
 
-func FindH16(data []byte) (found bool, end int) {
-	findH16 := abnfp.CreateFindVariableRepetitionMinMax(1, 4, abnfp.FindHexDig)
+func FindH16(data []byte) []int {
+	findH16 := abnfp.NewFindVariableRepetitionMinMax(1, 4, abnfp.FindHexDig)
 	return findH16(data)
 }
 
@@ -481,14 +445,14 @@ func FindH16(data []byte) (found bool, end int) {
 //  IPv4address = dec-octet "." dec-octet "." dec-octet "." dec-octet
 //
 
-func FindIpV4Address(data []byte) (found bool, end int) {
-	findIpV4Address := abnfp.CreateFindConcatenation([]abnfp.FindFunc{
+func FindIpV4Address(data []byte) []int {
+	findIpV4Address := abnfp.NewFindConcatenation([]abnfp.FindFunc{
 		FindDecOctet,
-		abnfp.CreateFind([]byte{'.'}),
+		abnfp.NewFindByte('.'),
 		FindDecOctet,
-		abnfp.CreateFind([]byte{'.'}),
+		abnfp.NewFindByte('.'),
 		FindDecOctet,
-		abnfp.CreateFind([]byte{'.'}),
+		abnfp.NewFindByte('.'),
 		FindDecOctet,
 	})
 	return findIpV4Address(data)
@@ -503,27 +467,27 @@ func FindIpV4Address(data []byte) (found bool, end int) {
 //            / "25" %x30-35          ; 250-255
 //
 
-func FindDecOctet(data []byte) (found bool, end int) {
-	findDecOctet := abnfp.CreateFindAlternatives([]abnfp.FindFunc{
+func FindDecOctet(data []byte) []int {
+	findDecOctet := abnfp.NewFindAlternatives([]abnfp.FindFunc{
 		// "25" %x30-35          ; 250-255
-		abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-			abnfp.CreateFind([]byte{'2', '5'}),
-			abnfp.CreateFindValueRangeAlternatives(0x30, 0x35),
+		abnfp.NewFindConcatenation([]abnfp.FindFunc{
+			abnfp.NewFindBytes([]byte("25")),
+			abnfp.NewFindValueRangeAlternatives(0x30, 0x35),
 		}),
 		// "2" %x30-34 DIGIT     ; 200-249
-		abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-			abnfp.CreateFind([]byte{'2'}),
-			abnfp.CreateFindValueRangeAlternatives(0x30, 0x34),
+		abnfp.NewFindConcatenation([]abnfp.FindFunc{
+			abnfp.NewFindByte('2'),
+			abnfp.NewFindValueRangeAlternatives(0x30, 0x34),
 			abnfp.FindDigit,
 		}),
 		// "1" 2DIGIT            ; 100-199
-		abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-			abnfp.CreateFind([]byte{'1'}),
-			abnfp.CreateFindSpecificRepetition(2, abnfp.FindDigit),
+		abnfp.NewFindConcatenation([]abnfp.FindFunc{
+			abnfp.NewFindByte('1'),
+			abnfp.NewFindSpecificRepetition(2, abnfp.FindDigit),
 		}),
 		// %x31-39 DIGIT         ; 10-99
-		abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-			abnfp.CreateFindValueRangeAlternatives(0x31, 0x39),
+		abnfp.NewFindConcatenation([]abnfp.FindFunc{
+			abnfp.NewFindValueRangeAlternatives(0x31, 0x39),
 			abnfp.FindDigit,
 		}),
 		// DIGIT                 ; 0-9
@@ -537,9 +501,9 @@ func FindDecOctet(data []byte) (found bool, end int) {
 //  reg-name = *( unreserved / pct-encoded / sub-delims )
 //
 
-func FindRegName(data []byte) (found bool, end int) {
-	findRegName := abnfp.CreateFindVariableRepetition(
-		abnfp.CreateFindAlternatives([]abnfp.FindFunc{
+func FindRegName(data []byte) []int {
+	findRegName := abnfp.NewFindVariableRepetition(
+		abnfp.NewFindAlternatives([]abnfp.FindFunc{
 			FindUnreserved,
 			FindPctEncoded,
 			FindSubDelims,
@@ -553,8 +517,8 @@ func FindRegName(data []byte) (found bool, end int) {
 //  port = *DIGIT
 //
 
-func FindPort(data []byte) (found bool, end int) {
-	findPort := abnfp.CreateFindVariableRepetition(abnfp.FindDigit)
+func FindPort(data []byte) []int {
+	findPort := abnfp.NewFindVariableRepetition(abnfp.FindDigit)
 	return findPort(data)
 }
 
@@ -567,15 +531,15 @@ func FindPort(data []byte) (found bool, end int) {
 //       / path-empty      ; zero characters
 //
 
-func FindPath(data []byte) (found bool, end int) {
+func FindPath(data []byte) []int {
 	// NOTE
 	// path-absolute and path-empty match 0 byte data.
 	// So move to the last of the slice.
-	findPath := abnfp.CreateFindAlternatives([]abnfp.FindFunc{
+	findPath := abnfp.NewFindAlternatives([]abnfp.FindFunc{
+		FindPathAbempty,
 		FindPathAbsolute,
 		FindPathNoScheme,
 		FindPathRootless,
-		FindPathAbempty,
 		FindPathEmpty,
 	})
 	return findPath(data)
@@ -586,10 +550,10 @@ func FindPath(data []byte) (found bool, end int) {
 //  path-abempty  = *( "/" segment )
 //
 
-func FindPathAbempty(data []byte) (found bool, end int) {
-	findPathAbempty := abnfp.CreateFindVariableRepetition(
-		abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-			abnfp.CreateFind([]byte{'/'}),
+func FindPathAbempty(data []byte) []int {
+	findPathAbempty := abnfp.NewFindVariableRepetition(
+		abnfp.NewFindConcatenation([]abnfp.FindFunc{
+			abnfp.NewFindByte('/'),
 			FindSegment,
 		}),
 	)
@@ -601,13 +565,13 @@ func FindPathAbempty(data []byte) (found bool, end int) {
 //  path-absolute = "/" [ segment-nz *( "/" segment ) ]
 //
 
-func FindPathAbsolute(data []byte) (found bool, end int) {
-	findPathAbsolute := abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-		abnfp.CreateFind([]byte{'/'}),
-		abnfp.CreateFindOptionalSequence(abnfp.CreateFindConcatenation([]abnfp.FindFunc{
+func FindPathAbsolute(data []byte) []int {
+	findPathAbsolute := abnfp.NewFindConcatenation([]abnfp.FindFunc{
+		abnfp.NewFindByte('/'),
+		abnfp.NewFindOptionalSequence(abnfp.NewFindConcatenation([]abnfp.FindFunc{
 			FindSegmentNz,
-			abnfp.CreateFindVariableRepetition(abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-				abnfp.CreateFind([]byte{'/'}),
+			abnfp.NewFindVariableRepetition(abnfp.NewFindConcatenation([]abnfp.FindFunc{
+				abnfp.NewFindByte('/'),
 				FindSegment,
 			})),
 		})),
@@ -620,11 +584,11 @@ func FindPathAbsolute(data []byte) (found bool, end int) {
 //  path-noscheme = segment-nz-nc *( "/" segment )
 //
 
-func FindPathNoScheme(data []byte) (found bool, end int) {
-	findPathNoScheme := abnfp.CreateFindConcatenation([]abnfp.FindFunc{
+func FindPathNoScheme(data []byte) []int {
+	findPathNoScheme := abnfp.NewFindConcatenation([]abnfp.FindFunc{
 		FindSegmentNzNc,
-		abnfp.CreateFindVariableRepetition(abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-			abnfp.CreateFind([]byte{'/'}),
+		abnfp.NewFindVariableRepetition(abnfp.NewFindConcatenation([]abnfp.FindFunc{
+			abnfp.NewFindByte('/'),
 			FindSegment,
 		})),
 	})
@@ -636,11 +600,11 @@ func FindPathNoScheme(data []byte) (found bool, end int) {
 //  path-rootless = segment-nz *( "/" segment )
 //
 
-func FindPathRootless(data []byte) (found bool, end int) {
-	findPathRootless := abnfp.CreateFindConcatenation([]abnfp.FindFunc{
+func FindPathRootless(data []byte) []int {
+	findPathRootless := abnfp.NewFindConcatenation([]abnfp.FindFunc{
 		FindSegmentNz,
-		abnfp.CreateFindVariableRepetition(abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-			abnfp.CreateFind([]byte{'/'}),
+		abnfp.NewFindVariableRepetition(abnfp.NewFindConcatenation([]abnfp.FindFunc{
+			abnfp.NewFindByte('/'),
 			FindSegment,
 		})),
 	})
@@ -652,8 +616,8 @@ func FindPathRootless(data []byte) (found bool, end int) {
 //  path-empty    = 0<pchar>
 //
 
-func FindPathEmpty(data []byte) (found bool, end int) {
-	return true, 0
+func FindPathEmpty(data []byte) []int {
+	return []int{0}
 }
 
 // RFC3986 - 3.3. Path
@@ -661,8 +625,8 @@ func FindPathEmpty(data []byte) (found bool, end int) {
 //  segment       = *pchar
 //
 
-func FindSegment(data []byte) (found bool, end int) {
-	findSegment := abnfp.CreateFindVariableRepetition(FindPchar)
+func FindSegment(data []byte) []int {
+	findSegment := abnfp.NewFindVariableRepetition(FindPchar)
 	return findSegment(data)
 }
 
@@ -671,8 +635,8 @@ func FindSegment(data []byte) (found bool, end int) {
 //  segment-nz    = 1*pchar
 //
 
-func FindSegmentNz(data []byte) (found bool, end int) {
-	findSegmentNz := abnfp.CreateFindVariableRepetitionMin(1, FindPchar)
+func FindSegmentNz(data []byte) []int {
+	findSegmentNz := abnfp.NewFindVariableRepetitionMin(1, FindPchar)
 	return findSegmentNz(data)
 }
 
@@ -682,13 +646,13 @@ func FindSegmentNz(data []byte) (found bool, end int) {
 //  							; non-zero-length segment without any colon ":"
 //
 
-func FindSegmentNzNc(data []byte) (found bool, end int) {
-	findSegmentNzNc := abnfp.CreateFindVariableRepetitionMin(1,
-		abnfp.CreateFindAlternatives([]abnfp.FindFunc{
+func FindSegmentNzNc(data []byte) []int {
+	findSegmentNzNc := abnfp.NewFindVariableRepetitionMin(1,
+		abnfp.NewFindAlternatives([]abnfp.FindFunc{
 			FindUnreserved,
 			FindPctEncoded,
 			FindSubDelims,
-			abnfp.CreateFind([]byte{'@'}),
+			abnfp.NewFindByte('@'),
 		}),
 	)
 	return findSegmentNzNc(data)
@@ -699,13 +663,13 @@ func FindSegmentNzNc(data []byte) (found bool, end int) {
 //  pchar         = unreserved / pct-encoded / sub-delims / ":" / "@"
 //
 
-func FindPchar(data []byte) (found bool, end int) {
-	findPchar := abnfp.CreateFindAlternatives([]abnfp.FindFunc{
+func FindPchar(data []byte) []int {
+	findPchar := abnfp.NewFindAlternatives([]abnfp.FindFunc{
 		FindUnreserved,
 		FindPctEncoded,
 		FindSubDelims,
-		abnfp.CreateFind([]byte{':'}),
-		abnfp.CreateFind([]byte{'@'}),
+		abnfp.NewFindByte(':'),
+		abnfp.NewFindByte('@'),
 	})
 	return findPchar(data)
 }
@@ -715,12 +679,12 @@ func FindPchar(data []byte) (found bool, end int) {
 //  query = *( pchar / "/" / "?" )
 //
 
-func FindQuery(data []byte) (found bool, end int) {
-	findQuery := abnfp.CreateFindVariableRepetition(
-		abnfp.CreateFindAlternatives([]abnfp.FindFunc{
+func FindQuery(data []byte) []int {
+	findQuery := abnfp.NewFindVariableRepetition(
+		abnfp.NewFindAlternatives([]abnfp.FindFunc{
 			FindPchar,
-			abnfp.CreateFind([]byte{'/'}),
-			abnfp.CreateFind([]byte{'?'}),
+			abnfp.NewFindByte('/'),
+			abnfp.NewFindByte('?'),
 		}),
 	)
 	return findQuery(data)
@@ -731,12 +695,12 @@ func FindQuery(data []byte) (found bool, end int) {
 //  fragment = *( pchar / "/" / "?" )
 //
 
-func FindFragment(data []byte) (found bool, end int) {
-	findFragment := abnfp.CreateFindVariableRepetition(
-		abnfp.CreateFindAlternatives([]abnfp.FindFunc{
+func FindFragment(data []byte) []int {
+	findFragment := abnfp.NewFindVariableRepetition(
+		abnfp.NewFindAlternatives([]abnfp.FindFunc{
 			FindPchar,
-			abnfp.CreateFind([]byte{'/'}),
-			abnfp.CreateFind([]byte{'?'}),
+			abnfp.NewFindByte('/'),
+			abnfp.NewFindByte('?'),
 		}),
 	)
 	return findFragment(data)
@@ -748,8 +712,8 @@ func FindFragment(data []byte) (found bool, end int) {
 //  URI-reference = URI / relative-ref
 //
 
-func FindUriReference(data []byte) (found bool, end int) {
-	findUriReference := abnfp.CreateFindAlternatives([]abnfp.FindFunc{
+func FindUriReference(data []byte) []int {
+	findUriReference := abnfp.NewFindAlternatives([]abnfp.FindFunc{
 		FindUri,
 		FindRelativeRef,
 	})
@@ -761,18 +725,18 @@ func FindUriReference(data []byte) (found bool, end int) {
 //  relative-ref  = relative-part [ "?" query ] [ "#" fragment ]
 //
 
-func FindRelativeRef(data []byte) (found bool, end int) {
-	findRelativeRef := abnfp.CreateFindConcatenation([]abnfp.FindFunc{
+func FindRelativeRef(data []byte) []int {
+	findRelativeRef := abnfp.NewFindConcatenation([]abnfp.FindFunc{
 		FindRelativePart,
-		abnfp.CreateFindOptionalSequence(
-			abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-				abnfp.CreateFind([]byte("?")),
+		abnfp.NewFindOptionalSequence(
+			abnfp.NewFindConcatenation([]abnfp.FindFunc{
+				abnfp.NewFindByte('?'),
 				FindQuery,
 			}),
 		),
-		abnfp.CreateFindOptionalSequence(
-			abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-				abnfp.CreateFind([]byte("#")),
+		abnfp.NewFindOptionalSequence(
+			abnfp.NewFindConcatenation([]abnfp.FindFunc{
+				abnfp.NewFindByte('#'),
 				FindFragment,
 			}),
 		),
@@ -788,7 +752,7 @@ func FindRelativeRef(data []byte) (found bool, end int) {
 //                / path-empty
 //
 
-func FindRelativePart(data []byte) (found bool, end int) {
+func FindRelativePart(data []byte) []int {
 	// NOTE
 	// I think relative-part is the same with hier-part.
 	//
@@ -807,14 +771,14 @@ func FindRelativePart(data []byte) (found bool, end int) {
 //  absolute-URI  = scheme ":" hier-part [ "?" query ]
 //
 
-func FindAbsoluteUri(data []byte) (found bool, end int) {
-	findAbsoluteUri := abnfp.CreateFindConcatenation([]abnfp.FindFunc{
+func FindAbsoluteUri(data []byte) []int {
+	findAbsoluteUri := abnfp.NewFindConcatenation([]abnfp.FindFunc{
 		FindScheme,
-		abnfp.CreateFind([]byte(":")),
+		abnfp.NewFindByte(':'),
 		FindHierPart,
-		abnfp.CreateFindOptionalSequence(
-			abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-				abnfp.CreateFind([]byte("?")),
+		abnfp.NewFindOptionalSequence(
+			abnfp.NewFindConcatenation([]abnfp.FindFunc{
+				abnfp.NewFindByte('?'),
 				FindQuery,
 			}),
 		),

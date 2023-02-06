@@ -1,2 +1,12 @@
 github.com/um7a/abnf-parser v0.0.4 h1:puQEQUeRCDwYl4rGrggC/N/XwPn/nI8R/C+1P2t/uKo=
 github.com/um7a/abnf-parser v0.0.4/go.mod h1:ewms1KU6vfUFRPLdvlUAWIWEvtmiAl4A31zGCrkXRrk=
+github.com/um7a/abnf-parser v0.1.2 h1:VDOHZYK65Fl1epnOZi5C+vBWq67eW4BW0vbnMguoSAs=
+github.com/um7a/abnf-parser v0.1.2/go.mod h1:ewms1KU6vfUFRPLdvlUAWIWEvtmiAl4A31zGCrkXRrk=
+github.com/um7a/abnf-parser v0.2.1 h1:XcgfcGENXUI3adhk66INeLPZk4rJH1M1pLT8uK8co1Y=
+github.com/um7a/abnf-parser v0.2.1/go.mod h1:ewms1KU6vfUFRPLdvlUAWIWEvtmiAl4A31zGCrkXRrk=
+github.com/um7a/abnf-parser v0.2.2 h1:B+immYt7Bf1cfrtB8wp69YnPKHnZBy9g589Hquqjm2g=
+github.com/um7a/abnf-parser v0.2.2/go.mod h1:ewms1KU6vfUFRPLdvlUAWIWEvtmiAl4A31zGCrkXRrk=
+github.com/um7a/abnf-parser v0.2.3 h1:O/LRtPZz6C64c/kNbH07/Qvy4DyKM+BlRCDDLJ+VE4Y=
+github.com/um7a/abnf-parser v0.2.3/go.mod h1:ewms1KU6vfUFRPLdvlUAWIWEvtmiAl4A31zGCrkXRrk=
+github.com/um7a/abnf-parser v0.2.5 h1:oTFZLXFTEURL5IIq6/5uWVrBysSeWckwp6HhYkMbfyQ=
+github.com/um7a/abnf-parser v0.2.5/go.mod h1:ewms1KU6vfUFRPLdvlUAWIWEvtmiAl4A31zGCrkXRrk=

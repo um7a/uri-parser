@@ -25,6 +25,31 @@ func Parse(data []byte) (uri *Uri, err error) {
 	//
 	//	URI = scheme ":" hier-part [ "?" query ] [ "#" fragment ]
 	//
+	// RFC3986 - 3.2. Authority
+	//
+	//	authority = [ userinfo "@" ] host [ ":" port ]
+	//
+	uri = new(Uri)
+	remaining := data
+
+	// RFC3986 - 3.1. Scheme
+	//
+	//  scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
+	//
+	result := abnfp.ParseLongest(remaining, FindScheme)
+	if len(result.Parsed) == 0 {
+		return nil, errors.New("scheme not found.")
+	}
+	uri.Scheme = result.Parsed
+	remaining = result.Remaining
+
+	// ":"
+	colonEnds := abnfp.NewFindByte(':')(remaining)
+	if len(colonEnds) == 0 {
+		return nil, errors.New("colon following scheme not found.")
+	}
+	remaining = remaining[colonEnds[0]:]
+
 	// RFC3986 - 3. Syntax Components
 	//
 	//	hier-part = "//" authority path-abempty
@@ -32,129 +57,123 @@ func Parse(data []byte) (uri *Uri, err error) {
 	//	          / path-rootless
 	//	          / path-empty
 	//
-	// RFC3986 - 3.2. Authority
-	//
-	//	authority = [ userinfo "@" ] host [ ":" port ]
-	//
-	uri = new(Uri)
-	found := false
-	remaining := data
+	result = abnfp.ParseLongest(remaining, FindHierPart)
+	if len(result.Parsed) >= 2 && result.Parsed[0] == '/' && result.Parsed[1] == '/' {
+		// hier-part = "//" authority path-abempty
 
-	// scheme
-	found, uri.Scheme, remaining = abnfp.Parse(remaining, FindScheme)
-	if !found {
-		return nil, errors.New("scheme not found.")
-	}
+		// "//"
+		uri.DoubleSlash = []byte("//")
+		remaining = remaining[2:]
 
-	// ":"
-	findColon := abnfp.CreateFind([]byte{':'})
-	found, _, remaining = abnfp.Parse(remaining, findColon)
-	if !found {
-		return nil, errors.New("colon following scheme not found.")
-	}
+		// RFC3986 - 3.2. Authority
+		//
+		//  authority = [ userinfo "@" ] host [ ":" port ]
+		//
 
-	// hier-part
-	found, _ = FindHierPart(remaining)
-	if !found {
-		return nil, errors.New("hier-part not found.")
-	}
-
-	// "//"
-	found, _ = abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-		abnfp.CreateFind([]byte("//")),
-		FindAuthority,
-		FindPathAbempty,
-	})(remaining)
-	if found {
-		// It seems that hier-part = ( "//" authority path-abempty ).
-		found, uri.DoubleSlash, remaining = abnfp.Parse(remaining, abnfp.CreateFind([]byte("//")))
-		if !found {
-			return nil, errors.New("hier-part has \"//\", but failed to parse \"//\".")
-		}
 		// [ userinfo "@" ]
-		found, _ = abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-			FindUserInfo,
-			abnfp.CreateFind([]byte{'@'}),
-		})(remaining)
-		if found {
-			found, uri.UserInfo, remaining = abnfp.Parse(remaining, FindUserInfo)
-			if !found {
-				return nil, errors.New("[ userinfo \"@\" ] found. But failed to parse userinfo.")
-			}
-			found, uri.AtSign, remaining = abnfp.Parse(remaining, abnfp.CreateFind([]byte{'@'}))
-			if !found {
-				return nil, errors.New("[ userinfo \"@\" ] found. But failed to parse \"@\".")
-			}
+		result = abnfp.ParseLongest(remaining, abnfp.NewFindOptionalSequence(
+			abnfp.NewFindConcatenation([]abnfp.FindFunc{
+				FindUserInfo,
+				abnfp.NewFindByte('@'),
+			}),
+		))
+		if len(result.Parsed) > 0 {
+			// RFC3986 - 3.2.1. User Information
+			//
+			//  userinfo = *( unreserved / pct-encoded / sub-delims / ":" )
+			//
+			uri.UserInfo = result.Parsed[:len(result.Parsed)-1]
+			uri.AtSign = []byte("@")
+			remaining = result.Remaining
 		}
-		// host
-		found, uri.Host, remaining = abnfp.Parse(remaining, FindHost)
-		if !found {
-			return nil, errors.New("hier-part has \"//\", but host not found.")
+
+		// RFC3986 - 3.2.2. Host
+		//
+		//  host = IP-literal / IPv4address / reg-name
+		//
+		result = abnfp.ParseLongest(remaining, FindHost)
+		if len(result.Parsed) > 0 {
+			uri.Host = result.Parsed
+			remaining = result.Remaining
 		}
+
 		// [ ":" port ]
-		found, _ := abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-			abnfp.CreateFind([]byte{':'}),
-			FindPort,
-		})(remaining)
-		if found {
-			found, _, remaining = abnfp.Parse(remaining, abnfp.CreateFind([]byte{':'}))
-			if !found {
-				return nil, errors.New("[ \":\" port ] found. But failed to parse \":\".")
-			}
-			found, uri.Port, remaining = abnfp.Parse(remaining, FindPort)
-			if !found {
-				return nil, errors.New("[ \":\" port ] found. But failed to parse port.")
-			}
+		result = abnfp.ParseLongest(remaining, abnfp.NewFindOptionalSequence(
+			abnfp.NewFindConcatenation([]abnfp.FindFunc{
+				abnfp.NewFindByte(':'),
+				FindPort,
+			}),
+		))
+		if len(result.Parsed) > 0 {
+			uri.Port = result.Parsed[1:]
+			remaining = result.Remaining
 		}
-		// path-abempty
-		found, uri.Path, remaining = abnfp.Parse(remaining, FindPathAbempty)
-		if !found {
-			return nil, errors.New("hier-part has \"//\", but failed to parse path-abempty.")
+
+		// RFC3986 - 3.3. Path
+		//
+		//  path-abempty  = *( "/" segment )
+		//
+		result = abnfp.ParseLongest(remaining, FindPathAbempty)
+		if len(result.Parsed) > 0 {
+			uri.Path = result.Parsed
+			remaining = result.Remaining
 		}
+	} else if len(result.Parsed) >= 1 && result.Parsed[0] == '/' {
+		// hier-part = path-absolute
+
+		// RFC3986 - 3.3. Path
+		//
+		//  path-absolute = "/" [ segment-nz *( "/" segment ) ]
+		//
+		result = abnfp.ParseLongest(remaining, FindPathAbsolute)
+		if len(result.Parsed) == 0 {
+			return nil, errors.New("path-absolute not found.")
+		}
+		uri.Path = result.Parsed
+		remaining = result.Remaining
+	} else if len(result.Parsed) > 0 {
+		// hier-part = path-rootless
+
+		// RFC3986 - 3.3. Path
+		//
+		//  path-rootless = segment-nz *( "/" segment )
+		//
+		result = abnfp.ParseLongest(remaining, FindPathRootless)
+		if len(result.Parsed) == 0 {
+			return nil, errors.New("path-rootless not found.")
+		}
+		uri.Path = result.Parsed
+		remaining = result.Remaining
 	} else {
-		// it seems that
-		//  hier-part = path-absolute
-		//            / path-rootless
-		//            / path-empty
-		findPath := abnfp.CreateFindAlternatives([]abnfp.FindFunc{
-			FindPathAbsolute,
-			FindPathRootless,
-			FindPathEmpty,
-		})
-		found, uri.Path, remaining = abnfp.Parse(remaining, findPath)
-		if !found {
-			return nil, errors.New("Failed to parse hier-part. Unknown syntax.")
-		}
+		// hier-part = path-empty
+
+		// do nothing.
 	}
+
 	// [ "?" query ]
-	found, _ = abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-		abnfp.CreateFind([]byte{'?'}),
-		FindQuery,
-	})(remaining)
-	if found {
-		found, uri.Question, remaining = abnfp.Parse(remaining, abnfp.CreateFind([]byte{'?'}))
-		if !found {
-			return nil, errors.New("[ \"?\" query ] found. But failed to parse \"?\"")
-		}
-		found, uri.Query, remaining = abnfp.Parse(remaining, FindQuery)
-		if !found {
-			return nil, errors.New("[ \"?\" query ] found. But failed to parse query.")
-		}
+	result = abnfp.ParseLongest(remaining, abnfp.NewFindOptionalSequence(
+		abnfp.NewFindConcatenation([]abnfp.FindFunc{
+			abnfp.NewFindByte('?'),
+			FindQuery,
+		}),
+	))
+	if len(result.Parsed) > 0 {
+		uri.Question = []byte("?")
+		uri.Query = result.Parsed[1:]
+		remaining = result.Remaining
 	}
+
 	// [ "#" fragment ]
-	found, _ = abnfp.CreateFindConcatenation([]abnfp.FindFunc{
-		abnfp.CreateFind([]byte{'#'}),
-		FindFragment,
-	})(remaining)
-	if found {
-		found, uri.Sharp, remaining = abnfp.Parse(remaining, abnfp.CreateFind([]byte{'#'}))
-		if !found {
-			return nil, errors.New("[ \"#\" fragment ] found. But failed to parse \"#\"")
-		}
-		found, uri.Fragment, remaining = abnfp.Parse(remaining, FindFragment)
-		if !found {
-			return nil, errors.New("[ \"#\" fragment ] found. But failed to parse fragment.")
-		}
+	result = abnfp.ParseLongest(remaining, abnfp.NewFindOptionalSequence(
+		abnfp.NewFindConcatenation([]abnfp.FindFunc{
+			abnfp.NewFindByte('#'),
+			FindFragment,
+		}),
+	))
+	if len(result.Parsed) > 0 {
+		uri.Sharp = []byte("#")
+		uri.Fragment = result.Parsed[1:]
+		remaining = result.Remaining
 	}
 	return uri, nil
 }

@@ -5,22 +5,22 @@ import (
 	"testing"
 )
 
-func TestParse(t *testing.T) {
-	byteEquals := func(testName string, t *testing.T, expected []byte, actual []byte) {
-		if len(actual) != len(expected) {
+func byteEquals(testName string, t *testing.T, expected []byte, actual []byte) {
+	if len(actual) != len(expected) {
+		t.Logf("expected: %s, actual %s", expected, actual)
+		t.Errorf("%v: len(expected): %v, len(actual): %v", testName, len(expected), len(actual))
+		return
+	}
+	for i, e := range expected {
+		if e != actual[i] {
 			t.Logf("expected: %s, actual %s", expected, actual)
-			t.Errorf("%v: len(expected): %v, len(actual): %v", testName, len(expected), len(actual))
+			t.Errorf("%v: expected[%v]: %v, actual[%v]): %v", testName, i, expected, i, actual)
 			return
 		}
-		for i, e := range expected {
-			if e != actual[i] {
-				t.Logf("expected: %s, actual %s", expected, actual)
-				t.Errorf("%v: expected[%v]: %v, actual[%v]): %v", testName, i, expected, i, actual)
-				return
-			}
-		}
 	}
+}
 
+func TestParse(t *testing.T) {
 	type TestCase struct {
 		testName            string
 		data                []byte
