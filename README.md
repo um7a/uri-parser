@@ -3,7 +3,7 @@
 ## Usage
 
 ```bash
-$ go get github.com/um7a/uri-parser@v0.0.1
+$ go get github.com/um7a/uri-parser@v0.0.4
 ```
 
 ```go
