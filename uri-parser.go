@@ -9,13 +9,12 @@ import (
 //  pct-encoded   = "%" HEXDIG HEXDIG
 //
 
-func FindPctEncoded(data []byte) []int {
-	findPctEncoded := abnfp.NewFindConcatenation([]abnfp.FindFunc{
-		abnfp.NewFindByte('%'),
-		abnfp.FindHexDig,
-		abnfp.FindHexDig,
+func NewPctEncodedFinder() abnfp.Finder {
+	return abnfp.NewConcatenationFinder([]abnfp.Finder{
+		abnfp.NewByteFinder('%'),
+		abnfp.NewHexDigFinder(),
+		abnfp.NewHexDigFinder(),
 	})
-	return findPctEncoded(data)
 }
 
 // RFC3986 - 2.2. Reserved Characters
@@ -23,12 +22,11 @@ func FindPctEncoded(data []byte) []int {
 //  reserved    = gen-delims / sub-delims
 //
 
-func FindReserved(data []byte) []int {
-	findReserved := abnfp.NewFindAlternatives([]abnfp.FindFunc{
-		FindGenDelims,
-		FindSubDelims,
+func NewReservedFinder() abnfp.Finder {
+	return abnfp.NewAlternativesFinder([]abnfp.Finder{
+		NewGenDelimsFinder(),
+		NewSubDelimsFinder(),
 	})
-	return findReserved(data)
 }
 
 // RFC3986 - 2.2. Reserved Characters
@@ -36,17 +34,16 @@ func FindReserved(data []byte) []int {
 //  gen-delims  = ":" / "/" / "?" / "#" / "[" / "]" / "@"
 //
 
-func FindGenDelims(data []byte) []int {
-	findGenDelims := abnfp.NewFindAlternatives([]abnfp.FindFunc{
-		abnfp.NewFindByte(':'),
-		abnfp.NewFindByte('/'),
-		abnfp.NewFindByte('?'),
-		abnfp.NewFindByte('#'),
-		abnfp.NewFindByte('['),
-		abnfp.NewFindByte(']'),
-		abnfp.NewFindByte('@'),
+func NewGenDelimsFinder() abnfp.Finder {
+	return abnfp.NewAlternativesFinder([]abnfp.Finder{
+		abnfp.NewByteFinder(':'),
+		abnfp.NewByteFinder('/'),
+		abnfp.NewByteFinder('?'),
+		abnfp.NewByteFinder('#'),
+		abnfp.NewByteFinder('['),
+		abnfp.NewByteFinder(']'),
+		abnfp.NewByteFinder('@'),
 	})
-	return findGenDelims(data)
 }
 
 // RFC3986 - 2.2. Reserved Characters
@@ -55,21 +52,20 @@ func FindGenDelims(data []byte) []int {
 //              / "*" / "+" / "," / ";" / "="
 //
 
-func FindSubDelims(data []byte) []int {
-	findSubDelims := abnfp.NewFindAlternatives([]abnfp.FindFunc{
-		abnfp.NewFindByte('!'),
-		abnfp.NewFindByte('$'),
-		abnfp.NewFindByte('&'),
-		abnfp.NewFindByte('\''),
-		abnfp.NewFindByte('('),
-		abnfp.NewFindByte(')'),
-		abnfp.NewFindByte('*'),
-		abnfp.NewFindByte('+'),
-		abnfp.NewFindByte(','),
-		abnfp.NewFindByte(';'),
-		abnfp.NewFindByte('='),
+func NewSubDelimsFinder() abnfp.Finder {
+	return abnfp.NewAlternativesFinder([]abnfp.Finder{
+		abnfp.NewByteFinder('!'),
+		abnfp.NewByteFinder('$'),
+		abnfp.NewByteFinder('&'),
+		abnfp.NewByteFinder('\''),
+		abnfp.NewByteFinder('('),
+		abnfp.NewByteFinder(')'),
+		abnfp.NewByteFinder('*'),
+		abnfp.NewByteFinder('+'),
+		abnfp.NewByteFinder(','),
+		abnfp.NewByteFinder(';'),
+		abnfp.NewByteFinder('='),
 	})
-	return findSubDelims(data)
 }
 
 // RFC3986 - 2.3. Unreserved Characters
@@ -77,16 +73,15 @@ func FindSubDelims(data []byte) []int {
 //  unreserved  = ALPHA / DIGIT / "-" / "." / "_" / "~"
 //
 
-func FindUnreserved(data []byte) []int {
-	findUnreserved := abnfp.NewFindAlternatives([]abnfp.FindFunc{
-		abnfp.FindAlpha,
-		abnfp.FindDigit,
-		abnfp.NewFindByte('-'),
-		abnfp.NewFindByte('.'),
-		abnfp.NewFindByte('_'),
-		abnfp.NewFindByte('~'),
+func NewUnreservedFinder() abnfp.Finder {
+	return abnfp.NewAlternativesFinder([]abnfp.Finder{
+		abnfp.NewAlphaFinder(),
+		abnfp.NewDigitFinder(),
+		abnfp.NewByteFinder('-'),
+		abnfp.NewByteFinder('.'),
+		abnfp.NewByteFinder('_'),
+		abnfp.NewByteFinder('~'),
 	})
-	return findUnreserved(data)
 }
 
 // RFC3986 - 3. Syntax Components
@@ -94,25 +89,24 @@ func FindUnreserved(data []byte) []int {
 //  URI = scheme ":" hier-part [ "?" query ] [ "#" fragment ]
 //
 
-func FindUri(data []byte) []int {
-	findUrl := abnfp.NewFindConcatenation([]abnfp.FindFunc{
-		FindScheme,
-		abnfp.NewFindByte(':'),
-		FindHierPart,
-		abnfp.NewFindOptionalSequence(
-			abnfp.NewFindConcatenation([]abnfp.FindFunc{
-				abnfp.NewFindByte('?'),
-				FindQuery,
+func NewUriFinder() abnfp.Finder {
+	return abnfp.NewConcatenationFinder([]abnfp.Finder{
+		NewSchemeFinder(),
+		abnfp.NewByteFinder(':'),
+		NewHierPartFinder(),
+		abnfp.NewOptionalSequenceFinder(
+			abnfp.NewConcatenationFinder([]abnfp.Finder{
+				abnfp.NewByteFinder('?'),
+				NewQueryFinder(),
 			}),
 		),
-		abnfp.NewFindOptionalSequence(
-			abnfp.NewFindConcatenation([]abnfp.FindFunc{
-				abnfp.NewFindByte('#'),
-				FindQuery,
+		abnfp.NewOptionalSequenceFinder(
+			abnfp.NewConcatenationFinder([]abnfp.Finder{
+				abnfp.NewByteFinder('#'),
+				NewQueryFinder(),
 			}),
 		),
 	})
-	return findUrl(data)
 }
 
 // RFC3986 - 3. Syntax Components
@@ -123,18 +117,17 @@ func FindUri(data []byte) []int {
 //            / path-empty
 //
 
-func FindHierPart(data []byte) []int {
-	findHierPart := abnfp.NewFindAlternatives([]abnfp.FindFunc{
-		abnfp.NewFindConcatenation([]abnfp.FindFunc{
-			abnfp.NewFindBytes([]byte("//")),
-			FindAuthority,
-			FindPathAbempty,
+func NewHierPartFinder() abnfp.Finder {
+	return abnfp.NewAlternativesFinder([]abnfp.Finder{
+		abnfp.NewConcatenationFinder([]abnfp.Finder{
+			abnfp.NewBytesFinder([]byte("//")),
+			NewAuthorityFinder(),
+			NewPathAbemptyFinder(),
 		}),
-		FindPathAbsolute,
-		FindPathRootless,
-		FindPathEmpty,
+		NewPathAbsoluteFinder(),
+		NewPathRootlessFinder(),
+		NewPathEmptyFinder(),
 	})
-	return findHierPart(data)
 }
 
 // RFC3986 - 3.1. Scheme
@@ -142,19 +135,18 @@ func FindHierPart(data []byte) []int {
 //  scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
 //
 
-func FindScheme(data []byte) []int {
-	findScheme := abnfp.NewFindConcatenation([]abnfp.FindFunc{
-		abnfp.FindAlpha,
-		abnfp.NewFindVariableRepetition(
-			abnfp.NewFindAlternatives([]abnfp.FindFunc{
-				abnfp.FindAlpha,
-				abnfp.FindDigit,
-				abnfp.NewFindByte('+'),
-				abnfp.NewFindByte('-'),
-				abnfp.NewFindByte('.'),
+func NewSchemeFinder() abnfp.Finder {
+	return abnfp.NewConcatenationFinder([]abnfp.Finder{
+		abnfp.NewAlphaFinder(),
+		abnfp.NewVariableRepetitionFinder(
+			abnfp.NewAlternativesFinder([]abnfp.Finder{
+				abnfp.NewAlphaFinder(),
+				abnfp.NewDigitFinder(),
+				abnfp.NewByteFinder('+'),
+				abnfp.NewByteFinder('-'),
+				abnfp.NewByteFinder('.'),
 			})),
 	})
-	return findScheme(data)
 }
 
 // RFC3986 - 3.2. Authority
@@ -162,23 +154,22 @@ func FindScheme(data []byte) []int {
 //  authority = [ userinfo "@" ] host [ ":" port ]
 //
 
-func FindAuthority(data []byte) []int {
-	findAuthority := abnfp.NewFindConcatenation([]abnfp.FindFunc{
-		abnfp.NewFindOptionalSequence(
-			abnfp.NewFindConcatenation([]abnfp.FindFunc{
-				FindUserInfo,
-				abnfp.NewFindByte('@'),
+func NewAuthorityFinder() abnfp.Finder {
+	return abnfp.NewConcatenationFinder([]abnfp.Finder{
+		abnfp.NewOptionalSequenceFinder(
+			abnfp.NewConcatenationFinder([]abnfp.Finder{
+				NewUserInfoFinder(),
+				abnfp.NewByteFinder('@'),
 			}),
 		),
-		FindHost,
-		abnfp.NewFindOptionalSequence(
-			abnfp.NewFindConcatenation([]abnfp.FindFunc{
-				abnfp.NewFindByte(':'),
-				FindPort,
+		NewHostFinder(),
+		abnfp.NewOptionalSequenceFinder(
+			abnfp.NewConcatenationFinder([]abnfp.Finder{
+				abnfp.NewByteFinder(':'),
+				NewPortFinder(),
 			}),
 		),
 	})
-	return findAuthority(data)
 }
 
 // RFC3986 - 3.2.1. User Information
@@ -186,16 +177,15 @@ func FindAuthority(data []byte) []int {
 //  userinfo = *( unreserved / pct-encoded / sub-delims / ":" )
 //
 
-func FindUserInfo(data []byte) []int {
-	findUserInfo := abnfp.NewFindVariableRepetition(
-		abnfp.NewFindAlternatives([]abnfp.FindFunc{
-			FindUnreserved,
-			FindPctEncoded,
-			FindSubDelims,
-			abnfp.NewFindByte(':'),
+func NewUserInfoFinder() abnfp.Finder {
+	return abnfp.NewVariableRepetitionFinder(
+		abnfp.NewAlternativesFinder([]abnfp.Finder{
+			NewUnreservedFinder(),
+			NewPctEncodedFinder(),
+			NewSubDelimsFinder(),
+			abnfp.NewByteFinder(':'),
 		}),
 	)
-	return findUserInfo(data)
 }
 
 // RFC3986 - 3.2.2. Host
@@ -203,13 +193,12 @@ func FindUserInfo(data []byte) []int {
 //  host = IP-literal / IPv4address / reg-name
 //
 
-func FindHost(data []byte) []int {
-	findHost := abnfp.NewFindAlternatives([]abnfp.FindFunc{
-		FindIpLiteral,
-		FindIpV4Address,
-		FindRegName,
+func NewHostFinder() abnfp.Finder {
+	return abnfp.NewAlternativesFinder([]abnfp.Finder{
+		NewIpLiteralFinder(),
+		NewIpV4AddressFinder(),
+		NewRegNameFinder(),
 	})
-	return findHost(data)
 }
 
 // RFC3986 - 3.2.2. Host
@@ -217,16 +206,15 @@ func FindHost(data []byte) []int {
 //  IP-literal = "[" ( IPv6address / IPvFuture  ) "]"
 //
 
-func FindIpLiteral(data []byte) []int {
-	findIpLiteral := abnfp.NewFindConcatenation([]abnfp.FindFunc{
-		abnfp.NewFindByte('['),
-		abnfp.NewFindAlternatives([]abnfp.FindFunc{
-			FindIpV6Address,
-			FindIpVFuture,
+func NewIpLiteralFinder() abnfp.Finder {
+	return abnfp.NewConcatenationFinder([]abnfp.Finder{
+		abnfp.NewByteFinder('['),
+		abnfp.NewAlternativesFinder([]abnfp.Finder{
+			NewIpV6AddressFinder(),
+			NewIpVFutureFinder(),
 		}),
-		abnfp.NewFindByte(']'),
+		abnfp.NewByteFinder(']'),
 	})
-	return findIpLiteral(data)
 }
 
 // RFC3986 - 3.2.2. Host
@@ -234,20 +222,19 @@ func FindIpLiteral(data []byte) []int {
 //  IPvFuture = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" )
 //
 
-func FindIpVFuture(data []byte) []int {
-	findIpVFuture := abnfp.NewFindConcatenation([]abnfp.FindFunc{
-		abnfp.NewFindByte('v'),
-		abnfp.NewFindVariableRepetitionMin(1, abnfp.FindHexDig),
-		abnfp.NewFindByte('.'),
-		abnfp.NewFindVariableRepetitionMin(1, abnfp.NewFindAlternatives(
-			[]abnfp.FindFunc{
-				FindUnreserved,
-				FindSubDelims,
-				abnfp.NewFindByte(':'),
+func NewIpVFutureFinder() abnfp.Finder {
+	return abnfp.NewConcatenationFinder([]abnfp.Finder{
+		abnfp.NewByteFinder('v'),
+		abnfp.NewVariableRepetitionMinFinder(1, abnfp.NewHexDigFinder()),
+		abnfp.NewByteFinder('.'),
+		abnfp.NewVariableRepetitionMinFinder(1, abnfp.NewAlternativesFinder(
+			[]abnfp.Finder{
+				NewUnreservedFinder(),
+				NewSubDelimsFinder(),
+				abnfp.NewByteFinder(':'),
 			},
 		)),
 	})
-	return findIpVFuture(data)
 }
 
 // RFC3986 - 3.2.2. Host
@@ -263,152 +250,151 @@ func FindIpVFuture(data []byte) []int {
 //              / [ *6( h16 ":" ) h16 ] "::"
 //
 
-func FindIpV6Address(data []byte) []int {
-	findIpV6Address := abnfp.NewFindAlternatives([]abnfp.FindFunc{
+func NewIpV6AddressFinder() abnfp.Finder {
+	return abnfp.NewAlternativesFinder([]abnfp.Finder{
 		//                            6( h16 ":" ) ls32
-		abnfp.NewFindConcatenation([]abnfp.FindFunc{
-			abnfp.NewFindSpecificRepetition(6, abnfp.NewFindConcatenation(
-				[]abnfp.FindFunc{
-					FindH16,
-					abnfp.NewFindByte(':'),
+		abnfp.NewConcatenationFinder([]abnfp.Finder{
+			abnfp.NewSpecificRepetitionFinder(6, abnfp.NewConcatenationFinder(
+				[]abnfp.Finder{
+					NewH16Finder(),
+					abnfp.NewByteFinder(':'),
 				},
 			)),
-			FindLs32,
+			NewLs32Finder(),
 		}),
 		//                       "::" 5( h16 ":" ) ls32
-		abnfp.NewFindConcatenation([]abnfp.FindFunc{
-			abnfp.NewFindBytes([]byte("::")),
-			abnfp.NewFindSpecificRepetition(5, abnfp.NewFindConcatenation(
-				[]abnfp.FindFunc{
-					FindH16,
-					abnfp.NewFindByte(':'),
+		abnfp.NewConcatenationFinder([]abnfp.Finder{
+			abnfp.NewBytesFinder([]byte("::")),
+			abnfp.NewSpecificRepetitionFinder(5, abnfp.NewConcatenationFinder(
+				[]abnfp.Finder{
+					NewH16Finder(),
+					abnfp.NewByteFinder(':'),
 				},
 			)),
-			FindLs32,
+			NewLs32Finder(),
 		}),
 		// [               h16 ] "::" 4( h16 ":" ) ls32
-		abnfp.NewFindConcatenation([]abnfp.FindFunc{
-			abnfp.NewFindOptionalSequence(FindH16),
-			abnfp.NewFindBytes([]byte("::")),
-			abnfp.NewFindSpecificRepetition(4, abnfp.NewFindConcatenation(
-				[]abnfp.FindFunc{
-					FindH16,
-					abnfp.NewFindByte(':'),
+		abnfp.NewConcatenationFinder([]abnfp.Finder{
+			abnfp.NewOptionalSequenceFinder(NewH16Finder()),
+			abnfp.NewBytesFinder([]byte("::")),
+			abnfp.NewSpecificRepetitionFinder(4, abnfp.NewConcatenationFinder(
+				[]abnfp.Finder{
+					NewH16Finder(),
+					abnfp.NewByteFinder(':'),
 				},
 			)),
-			FindLs32,
+			NewLs32Finder(),
 		}),
 		// [ *1( h16 ":" ) h16 ] "::" 3( h16 ":" ) ls32
-		abnfp.NewFindConcatenation([]abnfp.FindFunc{
-			abnfp.NewFindOptionalSequence(
-				abnfp.NewFindConcatenation([]abnfp.FindFunc{
-					abnfp.NewFindVariableRepetitionMax(1,
-						abnfp.NewFindConcatenation([]abnfp.FindFunc{
-							FindH16,
-							abnfp.NewFindByte(':'),
+		abnfp.NewConcatenationFinder([]abnfp.Finder{
+			abnfp.NewOptionalSequenceFinder(
+				abnfp.NewConcatenationFinder([]abnfp.Finder{
+					abnfp.NewVariableRepetitionMaxFinder(1,
+						abnfp.NewConcatenationFinder([]abnfp.Finder{
+							NewH16Finder(),
+							abnfp.NewByteFinder(':'),
 						}),
 					),
-					FindH16,
+					NewH16Finder(),
 				}),
 			),
-			abnfp.NewFindBytes([]byte("::")),
-			abnfp.NewFindSpecificRepetition(3,
-				abnfp.NewFindConcatenation([]abnfp.FindFunc{
-					FindH16,
-					abnfp.NewFindByte(':'),
+			abnfp.NewBytesFinder([]byte("::")),
+			abnfp.NewSpecificRepetitionFinder(3,
+				abnfp.NewConcatenationFinder([]abnfp.Finder{
+					NewH16Finder(),
+					abnfp.NewByteFinder(':'),
 				}),
 			),
-			FindLs32,
+			NewLs32Finder(),
 		}),
 		// [ *2( h16 ":" ) h16 ] "::" 2( h16 ":" ) ls32
-		abnfp.NewFindConcatenation([]abnfp.FindFunc{
-			abnfp.NewFindOptionalSequence(
-				abnfp.NewFindConcatenation([]abnfp.FindFunc{
-					abnfp.NewFindVariableRepetitionMax(2,
-						abnfp.NewFindConcatenation([]abnfp.FindFunc{
-							FindH16,
-							abnfp.NewFindByte(':'),
+		abnfp.NewConcatenationFinder([]abnfp.Finder{
+			abnfp.NewOptionalSequenceFinder(
+				abnfp.NewConcatenationFinder([]abnfp.Finder{
+					abnfp.NewVariableRepetitionMaxFinder(2,
+						abnfp.NewConcatenationFinder([]abnfp.Finder{
+							NewH16Finder(),
+							abnfp.NewByteFinder(':'),
 						}),
 					),
-					FindH16,
+					NewH16Finder(),
 				}),
 			),
-			abnfp.NewFindBytes([]byte("::")),
-			abnfp.NewFindSpecificRepetition(2,
-				abnfp.NewFindConcatenation([]abnfp.FindFunc{
-					FindH16,
-					abnfp.NewFindByte(':'),
+			abnfp.NewBytesFinder([]byte("::")),
+			abnfp.NewSpecificRepetitionFinder(2,
+				abnfp.NewConcatenationFinder([]abnfp.Finder{
+					NewH16Finder(),
+					abnfp.NewByteFinder(':'),
 				}),
 			),
-			FindLs32,
+			NewLs32Finder(),
 		}),
 		// [ *3( h16 ":" ) h16 ] "::"    h16 ":"   ls32
-		abnfp.NewFindConcatenation([]abnfp.FindFunc{
-			abnfp.NewFindOptionalSequence(
-				abnfp.NewFindConcatenation([]abnfp.FindFunc{
-					abnfp.NewFindVariableRepetitionMax(3,
-						abnfp.NewFindConcatenation([]abnfp.FindFunc{
-							FindH16,
-							abnfp.NewFindByte(':'),
+		abnfp.NewConcatenationFinder([]abnfp.Finder{
+			abnfp.NewOptionalSequenceFinder(
+				abnfp.NewConcatenationFinder([]abnfp.Finder{
+					abnfp.NewVariableRepetitionMaxFinder(3,
+						abnfp.NewConcatenationFinder([]abnfp.Finder{
+							NewH16Finder(),
+							abnfp.NewByteFinder(':'),
 						}),
 					),
-					FindH16,
+					NewH16Finder(),
 				}),
 			),
-			abnfp.NewFindBytes([]byte("::")),
-			FindH16,
-			abnfp.NewFindByte(':'),
-			FindLs32,
+			abnfp.NewBytesFinder([]byte("::")),
+			NewH16Finder(),
+			abnfp.NewByteFinder(':'),
+			NewLs32Finder(),
 		}),
 		// [ *4( h16 ":" ) h16 ] "::"              ls32
-		abnfp.NewFindConcatenation([]abnfp.FindFunc{
-			abnfp.NewFindOptionalSequence(
-				abnfp.NewFindConcatenation([]abnfp.FindFunc{
-					abnfp.NewFindVariableRepetitionMax(4,
-						abnfp.NewFindConcatenation([]abnfp.FindFunc{
-							FindH16,
-							abnfp.NewFindByte(':'),
+		abnfp.NewConcatenationFinder([]abnfp.Finder{
+			abnfp.NewOptionalSequenceFinder(
+				abnfp.NewConcatenationFinder([]abnfp.Finder{
+					abnfp.NewVariableRepetitionMaxFinder(4,
+						abnfp.NewConcatenationFinder([]abnfp.Finder{
+							NewH16Finder(),
+							abnfp.NewByteFinder(':'),
 						}),
 					),
-					FindH16,
+					NewH16Finder(),
 				}),
 			),
-			abnfp.NewFindBytes([]byte("::")),
-			FindLs32,
+			abnfp.NewBytesFinder([]byte("::")),
+			NewLs32Finder(),
 		}),
 		// [ *5( h16 ":" ) h16 ] "::"              h16
-		abnfp.NewFindConcatenation([]abnfp.FindFunc{
-			abnfp.NewFindOptionalSequence(
-				abnfp.NewFindConcatenation([]abnfp.FindFunc{
-					abnfp.NewFindVariableRepetitionMax(5,
-						abnfp.NewFindConcatenation([]abnfp.FindFunc{
-							FindH16,
-							abnfp.NewFindByte(':'),
+		abnfp.NewConcatenationFinder([]abnfp.Finder{
+			abnfp.NewOptionalSequenceFinder(
+				abnfp.NewConcatenationFinder([]abnfp.Finder{
+					abnfp.NewVariableRepetitionMaxFinder(5,
+						abnfp.NewConcatenationFinder([]abnfp.Finder{
+							NewH16Finder(),
+							abnfp.NewByteFinder(':'),
 						}),
 					),
-					FindH16,
+					NewH16Finder(),
 				}),
 			),
-			abnfp.NewFindBytes([]byte("::")),
-			FindH16,
+			abnfp.NewBytesFinder([]byte("::")),
+			NewH16Finder(),
 		}),
 		// [ *6( h16 ":" ) h16 ] "::"
-		abnfp.NewFindConcatenation([]abnfp.FindFunc{
-			abnfp.NewFindOptionalSequence(
-				abnfp.NewFindConcatenation([]abnfp.FindFunc{
-					abnfp.NewFindVariableRepetitionMax(6,
-						abnfp.NewFindConcatenation([]abnfp.FindFunc{
-							FindH16,
-							abnfp.NewFindByte(':'),
+		abnfp.NewConcatenationFinder([]abnfp.Finder{
+			abnfp.NewOptionalSequenceFinder(
+				abnfp.NewConcatenationFinder([]abnfp.Finder{
+					abnfp.NewVariableRepetitionMaxFinder(6,
+						abnfp.NewConcatenationFinder([]abnfp.Finder{
+							NewH16Finder(),
+							abnfp.NewByteFinder(':'),
 						}),
 					),
-					FindH16,
+					NewH16Finder(),
 				}),
 			),
-			abnfp.NewFindBytes([]byte("::")),
+			abnfp.NewBytesFinder([]byte("::")),
 		}),
 	})
-	return findIpV6Address(data)
 }
 
 // RFC3986 - 3.2.2. Host
@@ -417,16 +403,15 @@ func FindIpV6Address(data []byte) []int {
 //  ; least-significant 32 bits of address
 //
 
-func FindLs32(data []byte) []int {
-	findH32 := abnfp.NewFindAlternatives([]abnfp.FindFunc{
-		abnfp.NewFindConcatenation([]abnfp.FindFunc{
-			FindH16,
-			abnfp.NewFindByte(':'),
-			FindH16,
+func NewLs32Finder() abnfp.Finder {
+	return abnfp.NewAlternativesFinder([]abnfp.Finder{
+		abnfp.NewConcatenationFinder([]abnfp.Finder{
+			NewH16Finder(),
+			abnfp.NewByteFinder(':'),
+			NewH16Finder(),
 		}),
-		FindIpV4Address,
+		NewIpV4AddressFinder(),
 	})
-	return findH32(data)
 }
 
 // RFC3986 - 3.2.2. Host
@@ -435,9 +420,8 @@ func FindLs32(data []byte) []int {
 //  ; 16 bits of address represented in hexadecimal
 //
 
-func FindH16(data []byte) []int {
-	findH16 := abnfp.NewFindVariableRepetitionMinMax(1, 4, abnfp.FindHexDig)
-	return findH16(data)
+func NewH16Finder() abnfp.Finder {
+	return abnfp.NewVariableRepetitionMinMaxFinder(1, 4, abnfp.NewHexDigFinder())
 }
 
 // RFC3986 - 3.2.2. Host
@@ -445,17 +429,16 @@ func FindH16(data []byte) []int {
 //  IPv4address = dec-octet "." dec-octet "." dec-octet "." dec-octet
 //
 
-func FindIpV4Address(data []byte) []int {
-	findIpV4Address := abnfp.NewFindConcatenation([]abnfp.FindFunc{
-		FindDecOctet,
-		abnfp.NewFindByte('.'),
-		FindDecOctet,
-		abnfp.NewFindByte('.'),
-		FindDecOctet,
-		abnfp.NewFindByte('.'),
-		FindDecOctet,
+func NewIpV4AddressFinder() abnfp.Finder {
+	return abnfp.NewConcatenationFinder([]abnfp.Finder{
+		NewDecOctetFinder(),
+		abnfp.NewByteFinder('.'),
+		NewDecOctetFinder(),
+		abnfp.NewByteFinder('.'),
+		NewDecOctetFinder(),
+		abnfp.NewByteFinder('.'),
+		NewDecOctetFinder(),
 	})
-	return findIpV4Address(data)
 }
 
 // RFC3986 - 3.2.2. Host
@@ -467,33 +450,32 @@ func FindIpV4Address(data []byte) []int {
 //            / "25" %x30-35          ; 250-255
 //
 
-func FindDecOctet(data []byte) []int {
-	findDecOctet := abnfp.NewFindAlternatives([]abnfp.FindFunc{
+func NewDecOctetFinder() abnfp.Finder {
+	return abnfp.NewAlternativesFinder([]abnfp.Finder{
 		// "25" %x30-35          ; 250-255
-		abnfp.NewFindConcatenation([]abnfp.FindFunc{
-			abnfp.NewFindBytes([]byte("25")),
-			abnfp.NewFindValueRangeAlternatives(0x30, 0x35),
+		abnfp.NewConcatenationFinder([]abnfp.Finder{
+			abnfp.NewBytesFinder([]byte("25")),
+			abnfp.NewValueRangeAlternativesFinder(0x30, 0x35),
 		}),
 		// "2" %x30-34 DIGIT     ; 200-249
-		abnfp.NewFindConcatenation([]abnfp.FindFunc{
-			abnfp.NewFindByte('2'),
-			abnfp.NewFindValueRangeAlternatives(0x30, 0x34),
-			abnfp.FindDigit,
+		abnfp.NewConcatenationFinder([]abnfp.Finder{
+			abnfp.NewByteFinder('2'),
+			abnfp.NewValueRangeAlternativesFinder(0x30, 0x34),
+			abnfp.NewDigitFinder(),
 		}),
 		// "1" 2DIGIT            ; 100-199
-		abnfp.NewFindConcatenation([]abnfp.FindFunc{
-			abnfp.NewFindByte('1'),
-			abnfp.NewFindSpecificRepetition(2, abnfp.FindDigit),
+		abnfp.NewConcatenationFinder([]abnfp.Finder{
+			abnfp.NewByteFinder('1'),
+			abnfp.NewSpecificRepetitionFinder(2, abnfp.NewDigitFinder()),
 		}),
 		// %x31-39 DIGIT         ; 10-99
-		abnfp.NewFindConcatenation([]abnfp.FindFunc{
-			abnfp.NewFindValueRangeAlternatives(0x31, 0x39),
-			abnfp.FindDigit,
+		abnfp.NewConcatenationFinder([]abnfp.Finder{
+			abnfp.NewValueRangeAlternativesFinder(0x31, 0x39),
+			abnfp.NewDigitFinder(),
 		}),
 		// DIGIT                 ; 0-9
-		abnfp.FindDigit,
+		abnfp.NewDigitFinder(),
 	})
-	return findDecOctet(data)
 }
 
 // RFC3986 - 3.2.2. Host
@@ -501,15 +483,14 @@ func FindDecOctet(data []byte) []int {
 //  reg-name = *( unreserved / pct-encoded / sub-delims )
 //
 
-func FindRegName(data []byte) []int {
-	findRegName := abnfp.NewFindVariableRepetition(
-		abnfp.NewFindAlternatives([]abnfp.FindFunc{
-			FindUnreserved,
-			FindPctEncoded,
-			FindSubDelims,
+func NewRegNameFinder() abnfp.Finder {
+	return abnfp.NewVariableRepetitionFinder(
+		abnfp.NewAlternativesFinder([]abnfp.Finder{
+			NewUnreservedFinder(),
+			NewPctEncodedFinder(),
+			NewSubDelimsFinder(),
 		}),
 	)
-	return findRegName(data)
 }
 
 // RFC3986 - 3.2.3. Port
@@ -517,9 +498,8 @@ func FindRegName(data []byte) []int {
 //  port = *DIGIT
 //
 
-func FindPort(data []byte) []int {
-	findPort := abnfp.NewFindVariableRepetition(abnfp.FindDigit)
-	return findPort(data)
+func NewPortFinder() abnfp.Finder {
+	return abnfp.NewVariableRepetitionFinder(abnfp.NewDigitFinder())
 }
 
 // RFC3986 - 3.3. Path
@@ -531,18 +511,17 @@ func FindPort(data []byte) []int {
 //       / path-empty      ; zero characters
 //
 
-func FindPath(data []byte) []int {
+func NewPathFinder() abnfp.Finder {
 	// NOTE
-	// path-absolute and path-empty match 0 byte data.
+	// path-abempty and path-empty match 0 byte data.
 	// So move to the last of the slice.
-	findPath := abnfp.NewFindAlternatives([]abnfp.FindFunc{
-		FindPathAbempty,
-		FindPathAbsolute,
-		FindPathNoScheme,
-		FindPathRootless,
-		FindPathEmpty,
+	return abnfp.NewAlternativesFinder([]abnfp.Finder{
+		NewPathAbsoluteFinder(), // path-absolute = "/" [ segment-nz *( "/" segment ) ]
+		NewPathNoSchemeFinder(), // path-noscheme = segment-nz-nc *( "/" segment )
+		NewPathRootlessFinder(), // path-rootless = segment-nz *( "/" segment )
+		NewPathAbemptyFinder(),  // path-abempty  = *( "/" segment )
+		NewPathEmptyFinder(),    // path-empty    = 0<pchar>
 	})
-	return findPath(data)
 }
 
 // RFC3986 - 3.3. Path
@@ -550,14 +529,13 @@ func FindPath(data []byte) []int {
 //  path-abempty  = *( "/" segment )
 //
 
-func FindPathAbempty(data []byte) []int {
-	findPathAbempty := abnfp.NewFindVariableRepetition(
-		abnfp.NewFindConcatenation([]abnfp.FindFunc{
-			abnfp.NewFindByte('/'),
-			FindSegment,
+func NewPathAbemptyFinder() abnfp.Finder {
+	return abnfp.NewVariableRepetitionFinder(
+		abnfp.NewConcatenationFinder([]abnfp.Finder{
+			abnfp.NewByteFinder('/'),
+			NewSegmentFinder(),
 		}),
 	)
-	return findPathAbempty(data)
 }
 
 // RFC3986 - 3.3. Path
@@ -565,18 +543,17 @@ func FindPathAbempty(data []byte) []int {
 //  path-absolute = "/" [ segment-nz *( "/" segment ) ]
 //
 
-func FindPathAbsolute(data []byte) []int {
-	findPathAbsolute := abnfp.NewFindConcatenation([]abnfp.FindFunc{
-		abnfp.NewFindByte('/'),
-		abnfp.NewFindOptionalSequence(abnfp.NewFindConcatenation([]abnfp.FindFunc{
-			FindSegmentNz,
-			abnfp.NewFindVariableRepetition(abnfp.NewFindConcatenation([]abnfp.FindFunc{
-				abnfp.NewFindByte('/'),
-				FindSegment,
+func NewPathAbsoluteFinder() abnfp.Finder {
+	return abnfp.NewConcatenationFinder([]abnfp.Finder{
+		abnfp.NewByteFinder('/'),
+		abnfp.NewOptionalSequenceFinder(abnfp.NewConcatenationFinder([]abnfp.Finder{
+			NewSegmentNzFinder(),
+			abnfp.NewVariableRepetitionFinder(abnfp.NewConcatenationFinder([]abnfp.Finder{
+				abnfp.NewByteFinder('/'),
+				NewSegmentFinder(),
 			})),
 		})),
 	})
-	return findPathAbsolute(data)
 }
 
 // RFC3986 - 3.3. Path
@@ -584,15 +561,14 @@ func FindPathAbsolute(data []byte) []int {
 //  path-noscheme = segment-nz-nc *( "/" segment )
 //
 
-func FindPathNoScheme(data []byte) []int {
-	findPathNoScheme := abnfp.NewFindConcatenation([]abnfp.FindFunc{
-		FindSegmentNzNc,
-		abnfp.NewFindVariableRepetition(abnfp.NewFindConcatenation([]abnfp.FindFunc{
-			abnfp.NewFindByte('/'),
-			FindSegment,
+func NewPathNoSchemeFinder() abnfp.Finder {
+	return abnfp.NewConcatenationFinder([]abnfp.Finder{
+		NewSegmentNzNcFinder(),
+		abnfp.NewVariableRepetitionFinder(abnfp.NewConcatenationFinder([]abnfp.Finder{
+			abnfp.NewByteFinder('/'),
+			NewSegmentFinder(),
 		})),
 	})
-	return findPathNoScheme(data)
 }
 
 // RFC3986 - 3.3. Path
@@ -600,15 +576,14 @@ func FindPathNoScheme(data []byte) []int {
 //  path-rootless = segment-nz *( "/" segment )
 //
 
-func FindPathRootless(data []byte) []int {
-	findPathRootless := abnfp.NewFindConcatenation([]abnfp.FindFunc{
-		FindSegmentNz,
-		abnfp.NewFindVariableRepetition(abnfp.NewFindConcatenation([]abnfp.FindFunc{
-			abnfp.NewFindByte('/'),
-			FindSegment,
+func NewPathRootlessFinder() abnfp.Finder {
+	return abnfp.NewConcatenationFinder([]abnfp.Finder{
+		NewSegmentNzFinder(),
+		abnfp.NewVariableRepetitionFinder(abnfp.NewConcatenationFinder([]abnfp.Finder{
+			abnfp.NewByteFinder('/'),
+			NewSegmentFinder(),
 		})),
 	})
-	return findPathRootless(data)
 }
 
 // RFC3986 - 3.3. Path
@@ -616,8 +591,8 @@ func FindPathRootless(data []byte) []int {
 //  path-empty    = 0<pchar>
 //
 
-func FindPathEmpty(data []byte) []int {
-	return []int{0}
+func NewPathEmptyFinder() abnfp.Finder {
+	return abnfp.NewSpecificRepetitionFinder(0, NewPcharFinder())
 }
 
 // RFC3986 - 3.3. Path
@@ -625,9 +600,8 @@ func FindPathEmpty(data []byte) []int {
 //  segment       = *pchar
 //
 
-func FindSegment(data []byte) []int {
-	findSegment := abnfp.NewFindVariableRepetition(FindPchar)
-	return findSegment(data)
+func NewSegmentFinder() abnfp.Finder {
+	return abnfp.NewVariableRepetitionFinder(NewPcharFinder())
 }
 
 // RFC3986 - 3.3. Path
@@ -635,9 +609,8 @@ func FindSegment(data []byte) []int {
 //  segment-nz    = 1*pchar
 //
 
-func FindSegmentNz(data []byte) []int {
-	findSegmentNz := abnfp.NewFindVariableRepetitionMin(1, FindPchar)
-	return findSegmentNz(data)
+func NewSegmentNzFinder() abnfp.Finder {
+	return abnfp.NewVariableRepetitionMinFinder(1, NewPcharFinder())
 }
 
 // RFC3986 - 3.3. Path
@@ -646,16 +619,15 @@ func FindSegmentNz(data []byte) []int {
 //  							; non-zero-length segment without any colon ":"
 //
 
-func FindSegmentNzNc(data []byte) []int {
-	findSegmentNzNc := abnfp.NewFindVariableRepetitionMin(1,
-		abnfp.NewFindAlternatives([]abnfp.FindFunc{
-			FindUnreserved,
-			FindPctEncoded,
-			FindSubDelims,
-			abnfp.NewFindByte('@'),
+func NewSegmentNzNcFinder() abnfp.Finder {
+	return abnfp.NewVariableRepetitionMinFinder(1,
+		abnfp.NewAlternativesFinder([]abnfp.Finder{
+			NewUnreservedFinder(),
+			NewPctEncodedFinder(),
+			NewSubDelimsFinder(),
+			abnfp.NewByteFinder('@'),
 		}),
 	)
-	return findSegmentNzNc(data)
 }
 
 // RFC3986 - 3.3. Path
@@ -663,15 +635,14 @@ func FindSegmentNzNc(data []byte) []int {
 //  pchar         = unreserved / pct-encoded / sub-delims / ":" / "@"
 //
 
-func FindPchar(data []byte) []int {
-	findPchar := abnfp.NewFindAlternatives([]abnfp.FindFunc{
-		FindUnreserved,
-		FindPctEncoded,
-		FindSubDelims,
-		abnfp.NewFindByte(':'),
-		abnfp.NewFindByte('@'),
+func NewPcharFinder() abnfp.Finder {
+	return abnfp.NewAlternativesFinder([]abnfp.Finder{
+		NewUnreservedFinder(),
+		NewPctEncodedFinder(),
+		NewSubDelimsFinder(),
+		abnfp.NewByteFinder(':'),
+		abnfp.NewByteFinder('@'),
 	})
-	return findPchar(data)
 }
 
 // RFC3986 - 3.4. Query
@@ -679,15 +650,14 @@ func FindPchar(data []byte) []int {
 //  query = *( pchar / "/" / "?" )
 //
 
-func FindQuery(data []byte) []int {
-	findQuery := abnfp.NewFindVariableRepetition(
-		abnfp.NewFindAlternatives([]abnfp.FindFunc{
-			FindPchar,
-			abnfp.NewFindByte('/'),
-			abnfp.NewFindByte('?'),
+func NewQueryFinder() abnfp.Finder {
+	return abnfp.NewVariableRepetitionFinder(
+		abnfp.NewAlternativesFinder([]abnfp.Finder{
+			NewPcharFinder(),
+			abnfp.NewByteFinder('/'),
+			abnfp.NewByteFinder('?'),
 		}),
 	)
-	return findQuery(data)
 }
 
 // RFC3986 - 3.5. Fragment
@@ -695,15 +665,14 @@ func FindQuery(data []byte) []int {
 //  fragment = *( pchar / "/" / "?" )
 //
 
-func FindFragment(data []byte) []int {
-	findFragment := abnfp.NewFindVariableRepetition(
-		abnfp.NewFindAlternatives([]abnfp.FindFunc{
-			FindPchar,
-			abnfp.NewFindByte('/'),
-			abnfp.NewFindByte('?'),
+func NewFragmentFinder() abnfp.Finder {
+	return abnfp.NewVariableRepetitionFinder(
+		abnfp.NewAlternativesFinder([]abnfp.Finder{
+			NewPcharFinder(),
+			abnfp.NewByteFinder('/'),
+			abnfp.NewByteFinder('?'),
 		}),
 	)
-	return findFragment(data)
 }
 
 // RFC3986 - 4.1. URI Reference
@@ -712,12 +681,11 @@ func FindFragment(data []byte) []int {
 //  URI-reference = URI / relative-ref
 //
 
-func FindUriReference(data []byte) []int {
-	findUriReference := abnfp.NewFindAlternatives([]abnfp.FindFunc{
-		FindUri,
-		FindRelativeRef,
+func NewUriReferenceFinder() abnfp.Finder {
+	return abnfp.NewAlternativesFinder([]abnfp.Finder{
+		NewUriFinder(),
+		NewRelativeRefFinder(),
 	})
-	return findUriReference(data)
 }
 
 // RFC3986 - 4.2. Relative Reference
@@ -725,23 +693,22 @@ func FindUriReference(data []byte) []int {
 //  relative-ref  = relative-part [ "?" query ] [ "#" fragment ]
 //
 
-func FindRelativeRef(data []byte) []int {
-	findRelativeRef := abnfp.NewFindConcatenation([]abnfp.FindFunc{
-		FindRelativePart,
-		abnfp.NewFindOptionalSequence(
-			abnfp.NewFindConcatenation([]abnfp.FindFunc{
-				abnfp.NewFindByte('?'),
-				FindQuery,
+func NewRelativeRefFinder() abnfp.Finder {
+	return abnfp.NewConcatenationFinder([]abnfp.Finder{
+		NewRelativePartFinder(),
+		abnfp.NewOptionalSequenceFinder(
+			abnfp.NewConcatenationFinder([]abnfp.Finder{
+				abnfp.NewByteFinder('?'),
+				NewQueryFinder(),
 			}),
 		),
-		abnfp.NewFindOptionalSequence(
-			abnfp.NewFindConcatenation([]abnfp.FindFunc{
-				abnfp.NewFindByte('#'),
-				FindFragment,
+		abnfp.NewOptionalSequenceFinder(
+			abnfp.NewConcatenationFinder([]abnfp.Finder{
+				abnfp.NewByteFinder('#'),
+				NewFragmentFinder(),
 			}),
 		),
 	})
-	return findRelativeRef(data)
 }
 
 // RFC3986 - 4.2. Relative Reference
@@ -752,7 +719,7 @@ func FindRelativeRef(data []byte) []int {
 //                / path-empty
 //
 
-func FindRelativePart(data []byte) []int {
+func NewRelativePartFinder() abnfp.Finder {
 	// NOTE
 	// I think relative-part is the same with hier-part.
 	//
@@ -763,7 +730,7 @@ func FindRelativePart(data []byte) []int {
 	//            / path-rootless
 	//            / path-empty
 	//
-	return FindHierPart(data)
+	return NewHierPartFinder()
 }
 
 // RFC3986 - 4.3. Absolute URI
@@ -771,17 +738,16 @@ func FindRelativePart(data []byte) []int {
 //  absolute-URI  = scheme ":" hier-part [ "?" query ]
 //
 
-func FindAbsoluteUri(data []byte) []int {
-	findAbsoluteUri := abnfp.NewFindConcatenation([]abnfp.FindFunc{
-		FindScheme,
-		abnfp.NewFindByte(':'),
-		FindHierPart,
-		abnfp.NewFindOptionalSequence(
-			abnfp.NewFindConcatenation([]abnfp.FindFunc{
-				abnfp.NewFindByte('?'),
-				FindQuery,
+func NewAbsoluteUriFinder() abnfp.Finder {
+	return abnfp.NewConcatenationFinder([]abnfp.Finder{
+		NewSchemeFinder(),
+		abnfp.NewByteFinder(':'),
+		NewHierPartFinder(),
+		abnfp.NewOptionalSequenceFinder(
+			abnfp.NewConcatenationFinder([]abnfp.Finder{
+				abnfp.NewByteFinder('?'),
+				NewQueryFinder(),
 			}),
 		),
 	})
-	return findAbsoluteUri(data)
 }

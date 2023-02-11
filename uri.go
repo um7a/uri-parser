@@ -30,25 +30,23 @@ func Parse(data []byte) (uri *Uri, err error) {
 	//	authority = [ userinfo "@" ] host [ ":" port ]
 	//
 	uri = new(Uri)
-	remaining := data
 
 	// RFC3986 - 3.1. Scheme
 	//
 	//  scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
 	//
-	result := abnfp.ParseLongest(remaining, FindScheme)
-	if len(result.Parsed) == 0 {
+	parsed, remaining := abnfp.Parse(data, NewSchemeFinder())
+	if len(parsed) == 0 {
 		return nil, errors.New("scheme not found.")
 	}
-	uri.Scheme = result.Parsed
-	remaining = result.Remaining
+	uri.Scheme = parsed
 
 	// ":"
-	colonEnds := abnfp.NewFindByte(':')(remaining)
-	if len(colonEnds) == 0 {
+	found, end := abnfp.NewByteFinder(':').Find(remaining)
+	if !found {
 		return nil, errors.New("colon following scheme not found.")
 	}
-	remaining = remaining[colonEnds[0]:]
+	remaining = remaining[end:]
 
 	// RFC3986 - 3. Syntax Components
 	//
@@ -57,13 +55,15 @@ func Parse(data []byte) (uri *Uri, err error) {
 	//	          / path-rootless
 	//	          / path-empty
 	//
-	result = abnfp.ParseLongest(remaining, FindHierPart)
-	if len(result.Parsed) >= 2 && result.Parsed[0] == '/' && result.Parsed[1] == '/' {
+
+	var hierPartRemaining []byte
+	parsed, remaining = abnfp.Parse(remaining, NewHierPartFinder())
+	if len(parsed) >= 2 && parsed[0] == '/' && parsed[1] == '/' {
 		// hier-part = "//" authority path-abempty
 
 		// "//"
-		uri.DoubleSlash = []byte("//")
-		remaining = remaining[2:]
+		uri.DoubleSlash = parsed[:2]
+		hierPartRemaining = parsed[2:]
 
 		// RFC3986 - 3.2. Authority
 		//
@@ -71,79 +71,73 @@ func Parse(data []byte) (uri *Uri, err error) {
 		//
 
 		// [ userinfo "@" ]
-		result = abnfp.ParseLongest(remaining, abnfp.NewFindOptionalSequence(
-			abnfp.NewFindConcatenation([]abnfp.FindFunc{
-				FindUserInfo,
-				abnfp.NewFindByte('@'),
-			}),
-		))
-		if len(result.Parsed) > 0 {
-			// RFC3986 - 3.2.1. User Information
-			//
-			//  userinfo = *( unreserved / pct-encoded / sub-delims / ":" )
-			//
-			uri.UserInfo = result.Parsed[:len(result.Parsed)-1]
+		parsed, hierPartRemaining = abnfp.Parse(
+			hierPartRemaining,
+			abnfp.NewOptionalSequenceFinder(
+				abnfp.NewConcatenationFinder([]abnfp.Finder{
+					NewUserInfoFinder(),
+					abnfp.NewByteFinder('@'),
+				}),
+			))
+		if len(parsed) > 0 {
+			uri.UserInfo = parsed[:len(parsed)-1]
 			uri.AtSign = []byte("@")
-			remaining = result.Remaining
 		}
 
 		// RFC3986 - 3.2.2. Host
 		//
 		//  host = IP-literal / IPv4address / reg-name
 		//
-		result = abnfp.ParseLongest(remaining, FindHost)
-		if len(result.Parsed) > 0 {
-			uri.Host = result.Parsed
-			remaining = result.Remaining
+		parsed, hierPartRemaining = abnfp.Parse(hierPartRemaining, NewHostFinder())
+		if len(parsed) > 0 {
+			uri.Host = parsed
 		}
 
 		// [ ":" port ]
-		result = abnfp.ParseLongest(remaining, abnfp.NewFindOptionalSequence(
-			abnfp.NewFindConcatenation([]abnfp.FindFunc{
-				abnfp.NewFindByte(':'),
-				FindPort,
-			}),
-		))
-		if len(result.Parsed) > 0 {
-			uri.Port = result.Parsed[1:]
-			remaining = result.Remaining
+		parsed, hierPartRemaining = abnfp.Parse(
+			hierPartRemaining,
+			abnfp.NewOptionalSequenceFinder(
+				abnfp.NewConcatenationFinder([]abnfp.Finder{
+					abnfp.NewByteFinder(':'),
+					NewPortFinder(),
+				}),
+			))
+		if len(parsed) > 0 {
+			uri.Port = parsed[1:]
 		}
 
 		// RFC3986 - 3.3. Path
 		//
 		//  path-abempty  = *( "/" segment )
 		//
-		result = abnfp.ParseLongest(remaining, FindPathAbempty)
-		if len(result.Parsed) > 0 {
-			uri.Path = result.Parsed
-			remaining = result.Remaining
+		parsed, hierPartRemaining = abnfp.Parse(hierPartRemaining, NewPathAbemptyFinder())
+		if len(parsed) > 0 {
+			uri.Path = parsed
 		}
-	} else if len(result.Parsed) >= 1 && result.Parsed[0] == '/' {
+	} else if len(parsed) >= 1 && parsed[0] == '/' {
 		// hier-part = path-absolute
 
 		// RFC3986 - 3.3. Path
 		//
 		//  path-absolute = "/" [ segment-nz *( "/" segment ) ]
 		//
-		result = abnfp.ParseLongest(remaining, FindPathAbsolute)
-		if len(result.Parsed) == 0 {
+		parsed, hierPartRemaining = abnfp.Parse(parsed, NewPathAbsoluteFinder())
+		if len(parsed) == 0 {
 			return nil, errors.New("path-absolute not found.")
 		}
-		uri.Path = result.Parsed
-		remaining = result.Remaining
-	} else if len(result.Parsed) > 0 {
+		uri.Path = parsed
+	} else if len(parsed) > 0 {
 		// hier-part = path-rootless
 
 		// RFC3986 - 3.3. Path
 		//
 		//  path-rootless = segment-nz *( "/" segment )
 		//
-		result = abnfp.ParseLongest(remaining, FindPathRootless)
-		if len(result.Parsed) == 0 {
+		parsed, hierPartRemaining = abnfp.Parse(parsed, NewPathRootlessFinder())
+		if len(parsed) == 0 {
 			return nil, errors.New("path-rootless not found.")
 		}
-		uri.Path = result.Parsed
-		remaining = result.Remaining
+		uri.Path = parsed
 	} else {
 		// hier-part = path-empty
 
@@ -151,29 +145,27 @@ func Parse(data []byte) (uri *Uri, err error) {
 	}
 
 	// [ "?" query ]
-	result = abnfp.ParseLongest(remaining, abnfp.NewFindOptionalSequence(
-		abnfp.NewFindConcatenation([]abnfp.FindFunc{
-			abnfp.NewFindByte('?'),
-			FindQuery,
+	parsed, remaining = abnfp.Parse(remaining, abnfp.NewOptionalSequenceFinder(
+		abnfp.NewConcatenationFinder([]abnfp.Finder{
+			abnfp.NewByteFinder('?'),
+			NewQueryFinder(),
 		}),
 	))
-	if len(result.Parsed) > 0 {
+	if len(parsed) > 0 {
 		uri.Question = []byte("?")
-		uri.Query = result.Parsed[1:]
-		remaining = result.Remaining
+		uri.Query = parsed[1:]
 	}
 
 	// [ "#" fragment ]
-	result = abnfp.ParseLongest(remaining, abnfp.NewFindOptionalSequence(
-		abnfp.NewFindConcatenation([]abnfp.FindFunc{
-			abnfp.NewFindByte('#'),
-			FindFragment,
+	parsed, remaining = abnfp.Parse(remaining, abnfp.NewOptionalSequenceFinder(
+		abnfp.NewConcatenationFinder([]abnfp.Finder{
+			abnfp.NewByteFinder('#'),
+			NewFragmentFinder(),
 		}),
 	))
-	if len(result.Parsed) > 0 {
+	if len(parsed) > 0 {
 		uri.Sharp = []byte("#")
-		uri.Fragment = result.Parsed[1:]
-		remaining = result.Remaining
+		uri.Fragment = parsed[1:]
 	}
 	return uri, nil
 }
@@ -209,7 +201,7 @@ func (uri *Uri) GetAuthority() string {
 	//
 	//  authority = [ userinfo "@" ] host [ ":" port ]
 	//
-	str := ""
+	var str string
 	str += string(uri.UserInfo)
 	str += string(uri.AtSign)
 	str += string(uri.Host)

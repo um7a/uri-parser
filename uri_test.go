@@ -20,7 +20,7 @@ func byteEquals(testName string, t *testing.T, expected []byte, actual []byte) {
 	}
 }
 
-func TestParse(t *testing.T) {
+func TestUri(t *testing.T) {
 	type TestCase struct {
 		testName            string
 		data                []byte
@@ -468,7 +468,6 @@ func TestParse(t *testing.T) {
 				testCase.expectedFragment,
 				uri.Fragment,
 			)
-
 			byteEquals(
 				fmt.Sprintf("%s(%s)", testCase.testName, "String"),
 				t,
